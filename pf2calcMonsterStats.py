@@ -44,7 +44,25 @@ with open("saves.csv") as saveData:
         lowSaves[int(row['Level'])] = int(row['Low'])
         terribleSaves[int(row['Level'])] = int(row['Terrible'])
         
-
+extremePer = dict()
+highPer = dict()
+moderatePer = dict()
+lowPer = dict()
+terriblePer = dict()
+per = {'Extreme':extremePer,
+         'High': highPer,
+         'Moderate': moderatePer,
+         'Low': lowPer,
+         'Terrible': terriblePer}
+with open("per.csv") as perData:
+    reader = csv.DictReader(perData, delimiter=',')
+    line = 0
+    for row in reader:
+        extremePer[int(row['Level'])] = int(row['Extreme'])
+        highPer[int(row['Level'])] = int(row['High'])
+        moderatePer[int(row['Level'])] = int(row['Moderate'])
+        lowPer[int(row['Level'])] = int(row['Low'])
+        terriblePer[int(row['Level'])] = int(row['Terrible'])
         
 highHP = dict()
 moderateHP = dict()
@@ -102,6 +120,7 @@ with open("damage.csv") as damageData:
 
 creatureData = {'AC': ac,
                 'Saves': saves,
+                'Perception': per,
                 'HP': hp,
                 'Attack': attack,
                 'Damage': damage}

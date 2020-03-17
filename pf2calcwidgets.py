@@ -1,5 +1,5 @@
 import copy
-from pf2calc import Selector, CombinedAttack, createTraces, createLevelTraces, createDamageDistribution, creatureData
+from pf2calc import Selector, CombinedAttack, createTraces, createLevelTraces, createDamageDistribution, createDebuffDistribution, creatureData
 import plotly.graph_objects as go
 from ipywidgets import widgets
 
@@ -9,30 +9,7 @@ levelDiff = widgets.BoundedIntText(
     max=10.0,
     step=1.0,
     description='Level difference:',
-    #continuous_update=False
-)
-attackBonus = widgets.BoundedIntText(
-    value=0.0,
-    min=-10.0,
-    max=10.0,
-    step=1.0,
-    description='Attack bonus:',
-    #continuous_update=False
-)
-damageBonus = widgets.BoundedIntText(
-    value=0.0,
-    min=-20.0,
-    max=50.0,
-    step=1.0,
-    description='Damage bonus:',
-    #continuous_update=False
-)
-weakness = widgets.BoundedIntText(
-    value=0.0,
-    min=-50.0,
-    max=50.0,
-    step=1.0,
-    description='Weakness:',
+    layout=widgets.Layout(width='12.5%')
     #continuous_update=False
 )
 
@@ -43,7 +20,8 @@ targetACSelector = widgets.Dropdown(
              'Moderate',
              'Low'],
     value='Moderate',
-    description='Target AC:'
+    description='Target AC:',
+    layout=widgets.Layout(width='15%')
 )
 
 targetSavesSelector = widgets.Dropdown(
@@ -59,7 +37,49 @@ targetSavesSelector = widgets.Dropdown(
              'Low',
              'Terrible'],
     value='Moderate',
-    description='Target Save:'
+    description='Target Save:',
+    layout=widgets.Layout(width='auto')
+)
+
+targetFortSelector = widgets.Dropdown(
+    options=['Extreme',
+             'High',
+             'Moderate',
+             'Low',
+             'Terrible'],
+    value='Moderate',
+    description='Target Fort:',
+    layout=widgets.Layout(width='17%')
+)
+targetRefSelector = widgets.Dropdown(
+    options=['Extreme',
+             'High',
+             'Moderate',
+             'Low',
+             'Terrible'],
+    value='Moderate',
+    description='Target Ref:',
+    layout=widgets.Layout(width='17%')
+)
+targetWillSelector = widgets.Dropdown(
+    options=['Extreme',
+             'High',
+             'Moderate',
+             'Low',
+             'Terrible'],
+    value='Moderate',
+    description='Target Will:',
+    layout=widgets.Layout(width='17%')
+)
+targetPerSelector = widgets.Dropdown(
+    options=['Extreme',
+             'High',
+             'Moderate',
+             'Low',
+             'Terrible'],
+    value='Moderate',
+    description='Target Perception:',
+    layout=widgets.Layout(width='17%')
 )
 
 def targetACChangedResponse(change):
@@ -69,13 +89,49 @@ def targetACChangedResponse(change):
 def targetSavesChangedResponse(change):
     Selector.changeTargetSaves(targetSavesSelector.value)
     updateEDBLGraph() 
+    
+def targetFortChangedResponse(change):
+    Selector.changeTargetFort(targetFortSelector.value)
+    updateEDBLGraph() 
 
-flatfootedBox = widgets.BoundedIntText(
-    value=0,
-    min=0,
-    max=100.0,
-    description='flat footed percent',
-    disabled=False
+def targetRefChangedResponse(change):
+    Selector.changeTargetRef(targetRefSelector.value)
+    updateEDBLGraph() 
+
+def targetWillChangedResponse(change):
+    Selector.changeTargetWill(targetWillSelector.value)
+    updateEDBLGraph() 
+    
+def targetPerChangedResponse(change):
+    Selector.changeTargetPer(targetPerSelector.value)
+    updateEDBLGraph() 
+
+attackBonus = widgets.BoundedIntText(
+    value=0.0,
+    min=-10.0,
+    max=10.0,
+    step=1.0,
+    description='Attack bonus:',
+    layout=widgets.Layout(width='auto')
+    #continuous_update=False
+)
+damageBonus = widgets.BoundedIntText(
+    value=0.0,
+    min=-20.0,
+    max=50.0,
+    step=1.0,
+    description='Weakness:',
+    layout=widgets.Layout(width='auto')
+    #continuous_update=False
+)
+weakness = widgets.BoundedIntText(
+    value=0.0,
+    min=-50.0,
+    max=50.0,
+    step=1.0,
+    description='Weakness:',
+    layout=widgets.Layout(width='auto')
+    #continuous_update=False
 )
 
 persistentDamageWeightBox = widgets.BoundedFloatText(
@@ -83,13 +139,111 @@ persistentDamageWeightBox = widgets.BoundedFloatText(
     min=0,
     max=10.0,
     description='Persistent Damage Weight',
-    disabled=False
+    disabled=False,
+    layout=widgets.Layout(width='auto')
+)
+
+flatfootedBox = widgets.BoundedIntText(
+    value=0,
+    min=0,
+    max=100.0,
+    description='Flat-Footed %',
+    disabled=False,
+    layout=widgets.Layout(width='14%')
 )
 
 applyDebuffs = widgets.Checkbox(
         value=True,
         description="Apply Debuffs"
 )
+
+concealment = widgets.Dropdown(
+    options=['None',
+             'Concealed',
+             'Invisible'],
+    value='None',
+    description='Concealment:',
+#    layout=widgets.Layout(width='17%')
+)
+clumsy = widgets.Dropdown(
+    options=['0',
+             '1',
+             '2',
+             '3',
+             '4'],
+    value='0',
+    description='Clumsy:',
+#    layout=widgets.Layout(width='17%')
+)
+drained = widgets.Dropdown(
+    options=['0',
+             '1',
+             '2',
+             '3',
+             '4'],
+    value='0',
+    description='Drained:',
+#    layout=widgets.Layout(width='17%')
+)
+enfeebled = widgets.Dropdown(
+    options=['0',
+             '1',
+             '2',
+             '3',
+             '4'],
+    value='0',
+    description='Enfeebled:',
+#    layout=widgets.Layout(width='17%')
+)
+frightened = widgets.Dropdown(
+    options=['0',
+             '1',
+             '2',
+             '3',
+             '4'],
+    value='0',
+    description='Frightened:',
+#    layout=widgets.Layout(width='17%')
+)
+sickened = widgets.Dropdown(
+    options=['0',
+             '1',
+             '2',
+             '3',
+             '4'],
+    value='0',
+    description='Sickened:',
+#    layout=widgets.Layout(width='17%')
+)
+stupified = widgets.Dropdown(
+    options=['0',
+             '1',
+             '2',
+             '3',
+             '4'],
+    value='0',
+    description='Stupified:',
+#    layout=widgets.Layout(width='17%')
+)
+
+def targetClumsyChangedResponse(change):
+    Selector.changeTargetClumsy(clumsy.value)
+    updateEDBLGraph() 
+def targetDrainedChangedResponse(change):
+    Selector.changeTargetDrained(drained.value)
+    updateEDBLGraph() 
+def targetEnfeebledChangedResponse(change):
+    Selector.changeTargetEnfeebled(enfeebled.value)
+    updateEDBLGraph() 
+def targetFrightenedChangedResponse(change):
+    Selector.changeTargetFrightened(frightened.value)
+    updateEDBLGraph() 
+def targetSickenedChangedResponse(change):
+    Selector.changeTargetSickened(sickened.value)
+    updateEDBLGraph() 
+def targetStupifiedChangedResponse(change):
+    Selector.changeTargetStupified(stupified.value)
+    updateEDBLGraph() 
 
 percentageView = widgets.Dropdown(
         options = ['Expected Damage',
@@ -100,7 +254,8 @@ percentageView = widgets.Dropdown(
                    'Expected Persistent Damage',
                    'Number of Hits',
                    'Number of Crits',
-                   'Number of Hits+Crits'],
+                   'Number of Hits+Crits',
+                   'Max Debuff'],
         value='Expected Damage'
 )
 
@@ -294,8 +449,7 @@ criticalSpecialization = widgets.Dropdown(
 featureOptions = ["1d6 Rune",
                  "1d4 Rune",
                  "backswing",
-                 "keen",
-                 "sticky bomb"]
+                 "keen"]
 
 featureSelection1 = widgets.Dropdown(
         options=featureOptions,
@@ -431,10 +585,14 @@ classSelector = widgets.Dropdown(
                  "Animal Companion",
                  "Cantrips",
                  "Spells",
+                 "Basic Saves",
+                 "Debuff Spells",
+                 "Focus Spells",
                  "Skills",
                  "Caster Strikes",
                  "Martial Strikes",
-                 "Monster",
+                 "Monster Strikes",
+                 "Summon Strikes",
                  "Effects"],
         value="Fighter",
         layout=widgets.Layout(width='auto')
@@ -480,8 +638,7 @@ barbarianOptions = ['Martial Strike',
 bardOptions = ['Caster Strike']
 championOptions = ['Martial Strike',
                    'Champion Smite Evil']
-cantripOptions = ['Acid Splash',
-                  'Electric Arc',
+cantripOptions = ['Electric Arc',
                   'Daze',
                   'Divine Lance',
                   'Produce Flame',
@@ -540,7 +697,8 @@ rangerOptions = ['Ranger Precision Edge',
 rogueOptions = ['Rogue Strike',
                 'Flat Foot Next Strike',
                 'Scoundrel Feint']
-sorcererOptions = ['Caster Strike',
+sorcererOptions = ['Dangerous Sorcery',
+                   'Caster Strike',
                    'Bespell Weapon']
 wizardOptions = ['Caster Strike',
                  'Bespell Weapon']
@@ -562,14 +720,54 @@ monsterOptions = ['Monster Extreme Attack High Damage',
                   'Monster Low Attack Moderate Damage',
                   'Monster Low Attack Low Damage'   
                   ]
+summonOptions = ['Summon Animal',
+                'Summon Dragon']
 effectOptions = ['Flat Foot Target',
                  'Flat Foot Next Strike']
-spellOptions = ['Dangerous Sorcery',
-                'Basic Save 1d8',
-                'Basic Save 1d10',
-                'Basic Save 2d6',
-                'Basic Save 2d6+1',
-                'Basic Save 2d6+2',
+debuffSpellOptions = ['Enfeeblement Attack',
+                      'Enfeeblement Save',
+                      'Fear: Debuff Attacker(123)',
+                'Fear: Debuff Target(123)',
+                'Debuff Attacker(012)',
+                'Debuff Target(012)'
+        ]
+basicSpellOptions = ['Basic Reflex 1d6',
+                'Basic Reflex 1d8',
+                'Basic Reflex 1d10',
+                'Basic Reflex 1d12',
+                'Basic Reflex 2d6',
+                'Basic Reflex 2d6+1',
+                'Basic Reflex 2d6+2',
+                'Basic Reflex 2d8',
+                'Basic Reflex 2d10',
+                'Basic Reflex 2d12',
+                'Basic Fort 1d6',
+                'Basic Fort 1d8',
+                'Basic Fort 1d10',
+                'Basic Fort 1d12',
+                'Basic Fort 2d6',
+                'Basic Fort 2d6+1',
+                'Basic Fort 2d6+2',
+                'Basic Fort 2d8',
+                'Basic Fort 2d10',
+                'Basic Fort 2d12',
+                'Basic Will 1d6',
+                'Basic Will 1d8',
+                'Basic Will 1d10',
+                'Basic Will 1d12',
+                'Basic Will 2d6',
+                'Basic Will 2d6+1',
+                'Basic Will 2d6+2',
+                'Basic Will 2d8',
+                'Basic Will 2d10',
+                'Basic Will 2d12'
+        ]
+spellOptions = ['Heal',
+                'd10 Heal',
+                '2action Heal',
+                '2action d10 Heal',
+                'Harm',
+                'd10 Harm',
                 'Magic Missle',
                 'True Strike',
                 'Phantom Pain',
@@ -578,22 +776,34 @@ spellOptions = ['Dangerous Sorcery',
                 'Shocking Grasp Metal',
                 'Hydralic Push',
                 'Acid Arrow',
+                'Flaming Sphere',
+                'Spiritual Weapon',
+                'Searing Light',
+                'Searing Light vs Fiend',
                 'Lightning Bolt',
+                'Holy Cascade',
+                'Holy Cascade vs Fiend',
+                'Divine Wrath',
                 'Wall of Fire',
                 'Phantasmal Killer',
                 'Pantasmal Calamity',
                 'Spirit Blast',
                 'Visions of Danger',
                 'Weird',
-                'Fear: Debuff Attacker(123)',
-                'Fear: Debuff Target(123)',
-                'Debuff Attacker(012)',
-                'Debuff Target(012)',
                 'Disintigrate Attack',
                 'Disintigrate Save',
-                'Enfeeblement Save',
-                'Summon Animal',
-                'Summon Dragon']
+                'Finger of Death',
+                'Meteor Swarm',
+                'Polar Ray',
+                'Horrid Wilting',
+                'Eclipse Burst',
+                'Sunburst']
+focusSpellOptions = ['Elemental Toss',
+                     'Fire Ray',
+                     'Force Bolt',
+                     'Tempest Surge'
+                     
+            ]
 skillOptions = ['Trained Feint',
                 'Max Feint',
                 'Trained Demoralize',
@@ -616,10 +826,14 @@ selectionSwitcher = {"Alchemist": alchemistOptions,
                      "Sorcerer": sorcererOptions,
                      "Wizard": wizardOptions,
                      "Animal Companion": animalcompanionOptions,
-                     "Monster": monsterOptions,
+                     "Monster Strikes": monsterOptions,
+                     "Summon Strikes": summonOptions,
                      "Effects": effectOptions,
                      "Spells": spellOptions,
-                     "Skills": skillOptions}
+                     "Skills": skillOptions,
+                     "Basic Saves": basicSpellOptions,
+                     "Debuff Spells": debuffSpellOptions,
+                     "Focus Spells": focusSpellOptions}
 
 
 selector = widgets.SelectMultiple(
@@ -904,15 +1118,35 @@ g.update_layout(title_text="Expected damage by level",
 
 def updateEDBLGraph():
     CombinedAttack.PDWeight = persistentDamageWeightBox.value
+    targetText = " Target w/ AC:" + str(targetACSelector.value) + " F:" + str(targetFortSelector.value) + " R:" + str(targetRefSelector.value)  + " W:" + str(targetWillSelector.value) + " P:" + str(targetPerSelector.value)
     if byLevelView.value and (levelViewSelector.value == 'Damage Distribution' or levelViewSelector.value == 'Cumulative Distribution'):
-        xLists, yLists, nameList = createDamageDistribution(levelDiff.value,
+        if percentageView.value == 'Expected Persistent Damage':
+            displayPersistent = True
+        else:  # 'Max Debuff': 
+            displayPersistent = False
+        if percentageView.value == 'Max Debuff': 
+            xLists, yLists, nameList = createDebuffDistribution(levelDiff.value,
                                             flatfootedBox.value, 
                                             attackBonus.value,
                                             damageBonus.value,
                                             weakness.value,
-                                            levelSelector.value)
-        titleText="Damage distribution for level " + str(levelSelector.value) + " vs Level " + str(levelSelector.value+levelDiff.value) + " Target with " + str(targetACSelector.value) + " AC and " + str(targetSavesSelector.value) + " Saves"
-        xaxisText="Damage"
+                                            levelSelector.value,
+                                            displayPersistent)
+            titleText="For lvl" + str(levelSelector.value) + " vs lvl" + str(levelSelector.value+levelDiff.value) + targetText
+            xaxisText="Max Debuff"
+        else:
+            xLists, yLists, nameList = createDamageDistribution(levelDiff.value,
+                                            flatfootedBox.value, 
+                                            attackBonus.value,
+                                            damageBonus.value,
+                                            weakness.value,
+                                            levelSelector.value,
+                                            displayPersistent)
+            titleText="For lvl" + str(levelSelector.value) + " vs lvl" + str(levelSelector.value+levelDiff.value) + targetText
+            if displayPersistent:
+                xaxisText="Persistent Damage"
+            else:
+                xaxisText="Damage"
         yaxisText="Chance"
         #y axis needs title
         # do all stuff here
@@ -945,22 +1179,22 @@ def updateEDBLGraph():
     
     if byLevelView.value:
         if levelViewSelector.value == 'Expected Damage by AC':
-            xLists, xLists2, yLists, pyLists, hitsLists, critsLists, nameList = createLevelTraces(levelDiff.value, 
+            xLists, xLists2, yLists, pyLists, hitsLists, critsLists, debuffLists, nameList = createLevelTraces(levelDiff.value, 
                                             flatfootedBox.value, 
                                             attackBonus.value,
                                             damageBonus.value,
                                             weakness.value,
                                             levelSelector.value)
-            titleText="Expected damage for level " + str(levelSelector.value) + " vs Level " + str(levelSelector.value+levelDiff.value) + " Target with " + str(targetACSelector.value) + " AC and " + str(targetSavesSelector.value) + " Saves"
+            titleText="For lvl" + str(levelSelector.value) + " vs lvl" + str(levelSelector.value+levelDiff.value) + targetText
             xaxisText="vs AC"  
 #            xaxis2Text="vs Save"
     else:
-        xLists, yLists, pyLists, hitsLists, critsLists, nameList = createTraces(levelDiff.value, 
+        xLists, yLists, pyLists, hitsLists, critsLists, debuffLists, nameList = createTraces(levelDiff.value, 
                                             flatfootedBox.value, 
                                             attackBonus.value,
                                             damageBonus.value,
                                             weakness.value)
-        titleText="Expected damage by level"+ " vs Level+" + str(levelDiff.value) + " Target with " + str(targetACSelector.value) + " AC and " + str(targetSavesSelector.value) + " Saves"
+        titleText="Vs lvl+" + str(levelDiff.value) + targetText
         xaxisText="Level"
 #     print("selected: ", xLists, yLists)
 #     print(Selector.selectedAttack[1])
@@ -989,6 +1223,10 @@ def updateEDBLGraph():
         for i in range(len(yLists)):
             for ii in range(len(yLists[i])):
                 yLists[i][ii] =  hitsLists[i][ii] + critsLists[i][ii]
+    elif wantedView == 'Max Debuff':
+        for i in range(len(yLists)):
+            for ii in range(len(yLists[i])):
+                yLists[i][ii] =  debuffLists[i][ii]
     else:
         for i in range(len(yLists)):
             for ii in range(len(yLists[i])):
@@ -1111,12 +1349,24 @@ persistentDamageWeightBox.observe(edblResponse, names="value")
 
 targetACSelector.observe(targetACChangedResponse, names="value")
 targetSavesSelector.observe(targetSavesChangedResponse, names="value")
+targetFortSelector.observe(targetFortChangedResponse, names="value")
+targetRefSelector.observe(targetRefChangedResponse, names="value")
+targetWillSelector.observe(targetWillChangedResponse, names="value")
+targetPerSelector.observe(targetPerChangedResponse, names="value")
+clumsy.observe(targetClumsyChangedResponse, names="value")
+drained.observe(targetDrainedChangedResponse, names="value")
+enfeebled.observe(targetEnfeebledChangedResponse, names="value")
+frightened.observe(targetFrightenedChangedResponse, names="value")
+sickened.observe(targetSickenedChangedResponse, names="value")
+stupified.observe(targetStupifiedChangedResponse, names="value")
+
 classSelector.observe(classSelectorResponse, names="value")
 
 
-adjustments = widgets.HBox([levelDiff,attackBonus,damageBonus])#weakness, applyDebuffs
-targetRow = widgets.HBox([targetACSelector, targetSavesSelector,flatfootedBox,persistentDamageWeightBox])
 
+targetRow = widgets.HBox([levelDiff, targetACSelector, targetFortSelector, targetRefSelector,targetWillSelector, targetPerSelector])
+debuffs = widgets.HBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
+adjustments = widgets.HBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox]) #weakness, applyDebuffs
 levelViewRow = widgets.HBox([percentageView,byLevelView,levelSelector,levelViewSelector])
 
     # no ,mapSelection
@@ -1133,6 +1383,7 @@ selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,combineS
 selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='105%'))
 
 ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
+                                            debuffs,
                                             adjustments,
               levelViewRow,
               g,

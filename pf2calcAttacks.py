@@ -6,12 +6,27 @@ Created on Thu Oct 10 15:18:59 2019
 """
 import copy
 from pf2calcMonsterStats import creatureData
+from distribution import Distribution
 
 d4 = [1/4] * 4
 d6 = [1/6] * 6
 d8 = [1/8] * 8
 d10 = [1/10] * 10
 d12 = [1/12] * 12
+
+Fort = 'Fort'
+Reflex = 'Reflex'
+Will = 'Will'
+Perception = 'Perception'
+
+Fire = 'Fire'
+Bleed = 'Bleed'
+Acid = 'Acid'
+Poison = 'Poison'
+Mental = 'Mental'
+Cold = 'Cold'
+Physical = 'Physical'
+Electricity = 'Electric'
 
 summonAnimalAttackB = [7,
 7,
@@ -958,6 +973,7 @@ spellDamage2d10 = {i: sDice[i]*[d10,d10] for i in range(1,21)}
 spellDamage2d12 = {i: sDice[i]*[d12,d12] for i in range(1,21)}
 spellDamage1 = {i: sDice[i]*1 for i in range(1,21)}
 spellDamage2 = {i: sDice[i]*2 for i in range(1,21)}
+spellDamage8 = {i: sDice[i]*8 for i in range(1,21)}
 spellDamage10 = {i: sDice[i]*10 for i in range(1,21)}
 spellDamage11 = {i: sDice[i]*11 for i in range(1,21)}
 spellDamage12 = {i: sDice[i]*12 for i in range(1,21)}
@@ -999,9 +1015,9 @@ fighterrangedDamage = {i: fwSpec[i] for i in range(1,21)}
 
 
 class Result:
-    def __init__(self, atk, damageDice, staticDamage):
-        self.damageDice = damageDice
-        self.staticDamage = staticDamage
+    def __init__(self, atk, damageDist, persDist):
+        self.damageDist = damageDist
+        self.persDist = persDist
         
         self.critDamDice = []
         self.critDam = 0
@@ -1030,8 +1046,13 @@ class Result:
         self.adddamage = 0
         
         self.debuffAttack = 0
-        self.debuffDamage = 0
-        self.debuffTarget = 0
+        self.enfeebled = 0
+        
+        self.clumsy = 0
+        self.drained = 0
+        self.frightened = 0
+        self.sickened = 0
+        self.stupified = 0
         
         self.treatWorse = False
         self.ignoreNext = False
@@ -1121,13 +1142,16 @@ class AtkSelection:
             
             self.persDamage = copy.copy(noneDamage)
             self.persDamageDice = {i: [] for i in range(1,21)}
+            self.persDamageType = None
+#            self.NDpersDamage = copy.copy(noneDamage)
+#            self.NDpersDamageDice = {i: [] for i in range(1,21)}
             
             self.splashDamage = None
             
             self.flatfootedDamage = copy.copy(noneDamage)
             self.flatfootedDamageDice = {i: [] for i in range(1,21)}
             
-            self.failureDamage = copy.copy(noneDamage)
+#            self.failureDamage = copy.copy(noneDamage)
             self.failureDamageDice = {i: [] for i in range(1,21)}
             self.certainStrike = False
             self.brutalFinish = False
@@ -1147,6 +1171,11 @@ class AtkSelection:
             self.minSpellLevel = 1
             self.constantSpellLevel = False
             
+            self.doubleDamage = True
+            self.doublePersDamage = True
+            self.halveDamage = True
+            self.damageOnSuccesSave = True
+            
             self.critSpecLevel = 21
             self.keenLevel = 21
             self.backswingLevel = 21
@@ -1159,17 +1188,29 @@ class AtkSelection:
             
             self.attackBonusOnFail = 0
             
-            self.critFailDebuffAttack = 0
-            self.failDebuffAttack = 0
-            self.successDebuffAttack = 0
+            self.okayDebuffAttack = 0
+            self.goodDebuffAttack = 0
+            self.veryGoodDebuffAttack = 0 
+            self.okayEnfeebled = 0
+            self.goodEnfeebled = 0
+            self.veryGoodEnfeebled = 0
             
-            self.critFailDebuffDamage = 0
-            self.failDebuffDamage = 0
-            self.successDebuffDamage = 0
+            self.okayClumsy = 0
+            self.goodClumsy = 0
+            self.veryGoodClumsy = 0
+            self.okayDrained = 0
+            self.goodDrained = 0
+            self.veryGoodDrained = 0
+            self.okayFrightened = 0
+            self.goodFrightened = 0
+            self.veryGoodFrightened = 0
+            self.okaySickened = 0
+            self.goodSickened = 0
+            self.veryGoodSickened = 0
+            self.okayStupified = 0
+            self.goodStupified = 0
+            self.veryGoodStupified = 0
             
-            self.critFailDebuffTarget = 0
-            self.failDebuffTarget = 0
-            self.successDebuffTarget = 0
             
             
             self.minL = 1
@@ -1368,6 +1409,20 @@ class AtkSelection:
                 return self.persDamageDice[level]
             return []
         
+#        def getNDPersistentDamage(self, level):
+#            if self.isSpell:
+#                    level = self.spellLevel(level)
+#            if self.NDpersDamage:
+#                return self.NDpersDamage[level]
+#            return 0
+#        
+#        def getNDPersistentDamageDice(self, level):
+#            if self.isSpell:
+#                    level = self.spellLevel(level)
+#            if self.NDpersDamageDice:
+#                return self.NDpersDamageDice[level]
+#            return []
+        
         def getSplashDamage(self, level):
             if self.isSpell:
                     level = self.spellLevel(level)
@@ -1403,12 +1458,12 @@ class AtkSelection:
                 return self.flatfootedDamageDice[level]
             return []
         
-        def getFailureDamage(self, level):
-            if self.isSpell:
-                    level = self.spellLevel(level)
-            if self.failureDamage:
-                return self.failureDamage[level]
-            return 0
+#        def getFailureDamage(self, level):
+#            if self.isSpell:
+#                    level = self.spellLevel(level)
+#            if self.failureDamage:
+#                return self.failureDamage[level]
+#            return 0
         
         def getFailureDamageDice(self, level):
             if self.isSpell:
@@ -1481,98 +1536,178 @@ class Strike(AtkSelection):
         self.isWeapon = isWeapon
         
     def critSuccessResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += self.damageBonus
-        staticDamage += context.getExtraDamage()
-        
+        bonus = self.damageBonus
+        bonus += context.getDamageBonus()
+        bonus += context.getExtraDamage()
         damageDice = self.getDamageDice(level, crit=True)
-        
+        damageDice += context.getHitDamageDice()
         if context.flatfooted:
             staticDamage += self.getFFDamage(level)
-            damageDice += self.getFFDamageDice(level)       
-
+            damageDice += self.getFFDamageDice(level)     
         
-        r = Result(self, damageDice, staticDamage)
+        persDam = self.getPersistentDamage(level)
+        persDamDice = self.getPersistentDamageDice(level)
+        persDamType = self.persDamageType
+        
+        splashDam = self.getSplashDamage(level)
+        if level >= self.stickybombLevel:
+            persDam += splashDam
+          
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        persDist = Distribution(persDamDice, persDam, persDamType)
+        
+        # double for crit 
+        if self.doubleDamage:
+            damageDist.double()
+            if self.doublePersDamage:
+                persDist.double()
+        
+        # splash damage
+        damageDist.add([],splashDam)
+        
+        # crit damage
+        critDam = self.getCriticalBonusDamage(level)
+        critDamDice = self.getCriticalBonusDamageDice(level)
+        damageDist.add(critDamDice,critDam)
+        critPersDam = self.getCriticalPersistentDamage(level)
+        critPersDamDice = self.getCriticalPersistentDamageDice(level)
+        persDist.add(critPersDamDice,critPersDam)
+        
+#        # no double persistent damage
+#        NDpersDam = self.getNDPersistentDamage(level)
+#        NDpersDamDice = self.getNDPersistentDamageDice(level)
+#        persDist.add(NDpersDamDice,NDpersDam)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        persDist.addWeakness(weakness)
+        
+        r = Result(self, damageDist, persDist)
         r.setCrit()
         
-        r.critDam = self.getCriticalBonusDamage(level)
-        r.critDamDice = self.getCriticalBonusDamageDice(level)
-        
-        r.persDam = self.getPersistentDamage(level)
-        r.persDamDice = self.getPersistentDamageDice(level)
-        r.critPersDam = self.getCriticalPersistentDamage(level)
-        r.critPersDamDice = self.getCriticalPersistentDamageDice(level)
-    
-        r.splashDam = self.getSplashDamage(level)
-        if level >= self.stickybombLevel:
-#            print("adding ",r.persDam,r.splashDam)
-            r.persDam += r.splashDam
-        
+        # on crit effects
         if self.ffonCrit(level):
             r.setFutureAttacksFF()
+            
+        r.debuffAttack = self.veryGoodDebuffAttack
+        r.clumsy = self.veryGoodClumsy
+        r.drained = self.veryGoodDrained
+        r.enfeebled = self.veryGoodEnfeebled
+        r.frightened = self.veryGoodFrightened
+        r.sickened = self.veryGoodSickened
+        r.stupified = self.veryGoodStupified
             
         return r
         
     def successResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += self.damageBonus
-        staticDamage += context.getExtraDamage()
-        
+        bonus = self.damageBonus
+        bonus += context.getDamageBonus()
+        bonus += context.getExtraDamage()
         damageDice = self.getDamageDice(level)
-        
+        damageDice += context.getHitDamageDice()
         if context.flatfooted:
             staticDamage += self.getFFDamage(level)
-            damageDice += self.getFFDamageDice(level)       
-
+            damageDice += self.getFFDamageDice(level)     
         
-        r = Result(self, damageDice, staticDamage)
-        r.setHit()
+        persDam = self.getPersistentDamage(level)
+        persDamDice = self.getPersistentDamageDice(level)
+        persDamType = self.persDamageType
         
-        r.persDam = self.getPersistentDamage(level)
-        r.persDamDice = self.getPersistentDamageDice(level)
-    
-        r.splashDam = self.getSplashDamage(level)
+        splashDam = self.getSplashDamage(level)
         if level >= self.stickybombLevel:
-#            print("adding ",r.persDam,r.splashDam)
-            r.persDam += r.splashDam
+            persDam += splashDam
+          
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        persDist = Distribution(persDamDice, persDam, persDamType)
+        
+        # splash damage
+        damageDist.add([],splashDam)
+        
+#        # no double persistent damage
+#        NDpersDam = self.getNDPersistentDamage(level)
+#        NDpersDamDice = self.getNDPersistentDamageDice(level)
+#        persDist.add(NDpersDamDice,NDpersDam)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        persDist.addWeakness(weakness)      
+        
+        r = Result(self, damageDist, persDist)
+        r.setHit()
             
         if self.ffonSuccess(level):
             r.setFutureAttacksFF()
             
+        r.debuffAttack = self.goodDebuffAttack
+        r.clumsy = self.goodClumsy
+        r.drained = self.goodDrained
+        r.enfeebled = self.goodEnfeebled
+        r.frightened = self.goodFrightened
+        r.sickened = self.goodSickened
+        r.stupified = self.goodStupified
+            
         return r
         
     def failureResult(self, level, context):
-        staticDamage = self.getFailureDamage(level)
+        context.getExtraDamage() # just clear this
+        
+        staticDamage = 0
         if self.certainStrike:
             staticDamage += self.getDamageBonus(level)
             if context.flatfooted:
                 staticDamage += self.getFFDamage(level)
-            staticDamage += self.damageBonus
                 
         damageDice = self.getFailureDamageDice(level)
         
-        if damageDice != [] or staticDamage != 0:
-            staticDamage += context.getDamageBonus()    
-            # only apply weakness/resistance for brutal finish
+        # apply bonuses and penelties to brutal finish
+        bonus = self.damageBonus
+        bonus += context.getDamageBonus()
+            
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
         
-
-        r = Result(self, damageDice, staticDamage)
+        # splash damage
+        splashDam = self.getSplashDamage(level)
+        damageDist.add([],splashDam)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        
+        r = Result(self, damageDist, Distribution())
         r.setFail()
         
         if(self.getBackswing(level)):
             r.setNextStrikeBonus(self.attackBonusOnFail+1)
         else:
             r.setNextStrikeBonus(self.attackBonusOnFail)
- 
-        r.splashDam = self.getSplashDamage(level)
         
         if self.ffonFail(level):
             r.setFutureAttacksFF()
             
+        r.debuffAttack = self.okayDebuffAttack
+        r.clumsy = self.okayClumsy
+        r.drained = self.okayDrained
+        r.enfeebled = self.okayEnfeebled
+        r.frightened = self.okayFrightened
+        r.sickened = self.okaySickened
+        r.stupified = self.okayStupified
+        
         return r
         
     def critFailureResult(self, level, context):
-        r = Result(self, [], 0)
+        context.getExtraDamage() # just clear this
+        r = Result(self, Distribution(), Distribution())
         r.setCritFail()
         return r
 
@@ -1703,21 +1838,6 @@ class SpellStrike(RangedStrike):
         self.isSpell = True
         self.isWeapon = False
         
-    def critSuccessResult(self, level, context):
-        r = super().critSuccessResult(level, context)
-        r.doublePersOnDouble = False
-        return r
-    
-class HPSpellStrike(RangedStrike):
-    def __init__(self, attack, damage):
-        super().__init__(attack, damage)
-        self.isSpell = True
-        self.isWeapon = False
-        
-    def critSuccessResult(self, level, context):
-        r = super().critSuccessResult(level, context)
-        r.doubleDamage = False
-        return r
     
 class SpellStrikeFilter(RangedStrike):
     def __init__(self, attack, damage):
@@ -1725,24 +1845,24 @@ class SpellStrikeFilter(RangedStrike):
         self.isWeapon = False
         
     def critSuccessResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCrit()
         r.treatWorse = True
         return r
     
     def successResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setHit()
         return r
         
     def failureResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setFail()
         r.ignoreNext = True
         return r
         
     def critFailureResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritFail()
         r.ignoreNext = True
         return r
@@ -1753,7 +1873,7 @@ class SaveAttack(AtkSelection):
         super().__init__(attack, damage)
         self.prim = True
         self.sec = False
-        
+        self.targetSave = Reflex
     def setPrimaryAS(self, score):
         scoreValues = abilityScoreConverter[score]
         self.addAttackBonuses(scoreValues)
@@ -1763,38 +1883,39 @@ class SaveAttack(AtkSelection):
     
 
     def critSuccessResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritSuccess()
         return r
     
     def successResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setSuccess()
         return r
         
     def failureResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setFail()
         return r
         
     def critFailureResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritFail()
         return r
 
 class Feint(SaveAttack):
     def __init__(self, attack):
         super().__init__(attack, noneDamage)
+        self.targetSave = Perception
         
     def critSuccessResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritSuccess()
         
         r.futureAttacksFF = True
         return r
     
     def successResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setSuccess()
         
         r.nextAttackFF = True
@@ -1803,16 +1924,17 @@ class Feint(SaveAttack):
 class ScoundrelFeint(SaveAttack):
     def __init__(self, attack):
         super().__init__(attack, noneDamage)
-    
+        self.targetSave = Perception
+        
     def critSuccessResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritSuccess()
         
         r.futureAttacksFF = True
         return r
     
     def successResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setSuccess()
         
         r.futureAttacksFF = True
@@ -1821,44 +1943,46 @@ class ScoundrelFeint(SaveAttack):
 class Demoralize(SaveAttack):
     def __init__(self, attack):
         super().__init__(attack, noneDamage)
+        self.targetSave = Will
         
     def critSuccessResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritSuccess()
         
-        r.debuffTarget = 2
+        r.frightened = 2
         return r
     
     def successResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setSuccess()
         
-        r.debuffTarget = 1
+        r.frightened = 1
         return r
 
 class ScareToDeath(SaveAttack):
     def __init__(self, attack):
         super().__init__(attack, noneDamage)
+        self.targetSave = Will
         
     def critSuccessResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setCritSuccess()
         
-        r.debuffTarget = 3
+        r.frightened = 3
         return r
     
     def successResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setSuccess()
         
-        r.debuffTarget = 2
+        r.frightened = 2
         return r
     
     def failureResult(self, level, context):
-        r = Result(self, [], 0)
+        r = Result(self, Distribution(),Distribution())
         r.setFail()
         
-        r.debuffTarget = 1
+        r.frightened = 1
         return r
         
 class Save(AtkSelection):
@@ -1867,6 +1991,7 @@ class Save(AtkSelection):
         self.prim = True
         self.sec = False
         self.isSpell = True
+        self.targetSave = Reflex
         
     def setPrimaryAS(self, score):
         scoreValues = abilityScoreConverter[score]
@@ -1879,60 +2004,150 @@ class Save(AtkSelection):
         return self.getAttack(level)
     
     def critSuccessResult(self, level, context):
-
-        r = Result(self, [], 0)
+        context.getExtraDamage()
+        
+        r = Result(self, Distribution(),Distribution())
         r.setCritSuccessSave()
         return r
         
     def successResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
+        bonus = self.damageBonus
+#        bonus += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
+        if self.damageOnSuccesSave:
+            damageDice = self.getDamageDice(level)
+        else: damageDice = []
         
-        # errorrsdfdafsdfsda
-        damageDice = self.getDamageDice(level)
-
-        r = Result(self, damageDice, staticDamage)
+        if context.flatfooted:
+            staticDamage += self.getFFDamage(level)
+            damageDice += self.getFFDamageDice(level)     
+        
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        
+        if self.halveDamage:
+            damageDist.halve()
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        
+        
+        r = Result(self, damageDist, Distribution())
         r.setSuccessSave()
-        r.debuffAttack = self.successDebuffAttack
-        r.debuffDamage = self.successDebuffDamage
-        r.debuffTarget = self.successDebuffTarget
+
+        r.debuffAttack = self.okayDebuffAttack
+        r.clumsy = self.okayClumsy
+        r.drained = self.okayDrained
+        r.enfeebled = self.okayEnfeebled
+        r.frightened = self.okayFrightened
+        r.sickened = self.okaySickened
+        r.stupified = self.okayStupified
         
         return r
         
     def failureResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
-        
+        bonus = self.damageBonus
+#        bnous += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
         damageDice = self.getDamageDice(level)
-
-        r = Result(self, damageDice, staticDamage)
-        r.setFailSave()
-        r.debuffAttack = self.failDebuffAttack
-        r.debuffDamage = self.failDebuffDamage
-        r.debuffTarget = self.failDebuffTarget
         
-        r.persDam = self.getPersistentDamage(level)
-        r.persDamDice = self.getPersistentDamageDice(level)
+        if context.flatfooted:
+            staticDamage += self.getFFDamage(level)
+            damageDice += self.getFFDamageDice(level)  
+            
+        persDam = self.getPersistentDamage(level)
+        persDamDice = self.getPersistentDamageDice(level)
+        persDamType = self.persDamageType
+        
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        persDist = Distribution(persDamDice, persDam, persDamType)
+        
+#        # no double persistent damage
+#        NDpersDam = self.getNDPersistentDamage(level)
+#        NDpersDamDice = self.getNDPersistentDamageDice(level)
+#        persDist.add(NDpersDamDice,NDpersDam)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        persDist.addWeakness(weakness)
+        
+        r = Result(self, damageDist, persDist)
+        r.setFailSave()
+        
+        r.debuffAttack = self.goodDebuffAttack
+        r.clumsy = self.goodClumsy
+        r.drained = self.goodDrained
+        r.enfeebled = self.goodEnfeebled
+        r.frightened = self.goodFrightened
+        r.sickened = self.goodSickened
+        r.stupified = self.goodStupified
         
         return r
         
     def critFailureResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
-        
+        bonus = self.damageBonus
+#        bonus += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
         damageDice = self.getDamageDice(level)
-
-        r = Result(self, damageDice, staticDamage)
-        r.setCritFailSave()
-        r.debuffAttack = self.critFailDebuffAttack
-        r.debuffDamage = self.critFailDebuffDamage
-        r.debuffTarget = self.critFailDebuffTarget
         
-        r.persDam = self.getPersistentDamage(level)
-        r.persDamDice = self.getPersistentDamageDice(level)
+        if context.flatfooted:
+            staticDamage += self.getFFDamage(level)
+            damageDice += self.getFFDamageDice(level)  
+            
+        persDam = self.getPersistentDamage(level)
+        persDamDice = self.getPersistentDamageDice(level)
+        persDamType = self.persDamageType
+        
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        persDist = Distribution(persDamDice, persDam, persDamType)
+        
+        # double for crit fail
+        if self.doubleDamage:
+            damageDist.double()
+            if self.doublePersDamage:
+                persDist.double()
+        
+        # crit damage
+        critDam = self.getCriticalBonusDamage(level)
+        critDamDice = self.getCriticalBonusDamageDice(level)
+        damageDist.add(critDamDice,critDam)
+        critPersDam = self.getCriticalPersistentDamage(level)
+        critPersDamDice = self.getCriticalPersistentDamageDice(level)
+        persDist.add(critPersDamDice,critPersDam)
+        
+#        # no double persistent damage
+#        NDpersDam = self.getNDPersistentDamage(level)
+#        NDpersDamDice = self.getNDPersistentDamageDice(level)
+#        persDist.add(NDpersDamDice,NDpersDam)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        persDist.addWeakness(weakness)
+        
+        r = Result(self, damageDist, persDist)
+        r.setCritFailSave()
+        
+        r.debuffAttack = self.veryGoodDebuffAttack
+        r.clumsy = self.veryGoodClumsy
+        r.drained = self.veryGoodDrained
+        r.enfeebled = self.veryGoodEnfeebled
+        r.frightened = self.veryGoodFrightened
+        r.sickened = self.veryGoodSickened
+        r.stupified = self.veryGoodStupified
         
         return r
     
@@ -1951,111 +2166,73 @@ class CantripSave(Save):
     def setSecondaryAS(self, score):
         return False
     
-class PhantomPainSave(Save):
-    def __init__(self, dc, damage):
-        super().__init__(dc, damage)
-    
-    def critSuccessResult(self, level, context):
-
-        r = Result(self, [], 0)
-        r.setCritSuccessSave()
-        return r
-        
-    def successResult(self, level, context):
-        staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
-        
-        # errorrsdfdafsdfsda
-        damageDice = self.getDamageDice(level)
-
-        r = Result(self, damageDice, staticDamage)
-        r.setSuccessSave()
-        r.halveDamage = False
-        return r
-        
-    def failureResult(self, level, context):
-        staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
-        
-        damageDice = self.getDamageDice(level)
-        
-        r = Result(self, damageDice, staticDamage)
-        r.persDamDice = self.getPersistentDamageDice(level)
-        r.setFailSave()
-        r.debuffAttack = self.failDebuffAttack
-        r.debuffTarget = self.failDebuffTarget
-        
-        return r
-        
-    def critFailureResult(self, level, context):
-        staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
-        
-        damageDice = self.getDamageDice(level)
-
-        r = Result(self, damageDice, staticDamage)
-        r.persDamDice = self.getPersistentDamageDice(level)
-        r.setCritFailSave()
-        r.doubleDamage = False
-        r.debuffAttack = self.critFailDebuffAttack
-        r.debuffTarget = self.critFailDebuffTarget
-       
-        return r
     
 class PKSave(Save):
     def __init__(self, dc, damage):
         super().__init__(dc, damage)
     
-    def critSuccessResult(self, level, context):
-
-        r = Result(self, [], 0)
-        r.setCritSuccessSave()
-        return r
         
     def successResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
+        bonus = self.damageBonus
+#        bonus += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
         
-        # errorrsdfdafsdfsda
+        # only use failure damage
         damageDice = self.getFailureDamageDice(level)
 
-        r = Result(self, damageDice, staticDamage)
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        
+        r = Result(self, damageDist, Distribution())
         r.setSuccessSave()
-        r.halveDamage = False
-        r.debuffAttack = self.successDebuffAttack
-        r.debuffTarget = self.successDebuffTarget
+
+        r.debuffAttack = self.okayDebuffAttack
+        r.clumsy = self.okayClumsy
+        r.drained = self.okayDrained
+        r.enfeebled = self.okayEnfeebled
+        r.frightened = self.okayFrightened
+        r.sickened = self.okaySickened
+        r.stupified = self.okayStupified
+        
         return r
         
-    def failureResult(self, level, context):
-        staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
-        
-        damageDice = self.getDamageDice(level)
-        
-        r = Result(self, damageDice, staticDamage)
-        r.setFailSave()
-        r.debuffAttack = self.failDebuffAttack
-        r.debuffTarget = self.failDebuffTarget
-        return r
-        
+
     def critFailureResult(self, level, context):
+        #get damage
         staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getExtraDamage()
-        staticDamage += self.damageBonus
+        bonus = self.damageBonus
+#        bonus += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
         
+        # only use critical damage
         damageDice = self.getCriticalBonusDamageDice(level)
 
-        r = Result(self, damageDice, staticDamage)
-        r.persDamDice = self.getPersistentDamageDice(level)
+        #create distribution
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        
+        r = Result(self, damageDist, Distribution())
         r.setCritFailSave()
-        r.doubleDamage = False
-        r.debuffAttack = self.critFailDebuffAttack
-        r.debuffTarget = self.critFailDebuffTarget
+        
+        r.debuffAttack = self.veryGoodDebuffAttack
+        r.clumsy = self.veryGoodClumsy
+        r.drained = self.veryGoodDrained
+        r.enfeebled = self.veryGoodEnfeebled
+        r.frightened = self.veryGoodFrightened
+        r.sickened = self.veryGoodSickened
+        r.stupified = self.veryGoodStupified
+        
         return r
     
 class AttackSave(AtkSelection):
@@ -2105,12 +2282,19 @@ class Effect(AtkSelection):
         
     def effectResult(self, level, context):
         staticDamage = self.getDamageBonus(level)
-        staticDamage += context.getDamageBonus()
-        staticDamage += self.damageBonus
-        
+        bonus = self.damageBonus
+#        bnous += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
         damageDice = self.getDamageDice(level)
-
-        r = Result(self,damageDice,staticDamage)
+        
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        
+        r = Result(self,damageDist,Distribution())
         
         if self.flatfoot:
             r.futureAttacksFF = True
@@ -2142,6 +2326,14 @@ class Effect(AtkSelection):
                 level = self.spellLevel(level)
             #print("adding ",self.addDamage[level])
             r.adddamage = self.addDamage[level]
+            
+        r.debuffAttack = self.goodDebuffAttack
+        r.clumsy = self.goodClumsy
+        r.drained = self.goodDrained
+        r.enfeebled = self.goodEnfeebled
+        r.frightened = self.goodFrightened
+        r.sickened = self.goodSickened
+        r.stupified = self.goodStupified
             
         return r
     
@@ -2205,6 +2397,7 @@ alchemistacids.weaponDamage = acidFlaskDamage
 alchemistacids.persDamageDice = acidFlaskPersDamage
 #alchemistacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
 alchemistacids.splashDamage = bombSplashDamage
+alchemistacids.persDamageType = Acid
 
 alchemistbacids = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbacids.isWeapon = False
@@ -2212,6 +2405,7 @@ alchemistbacids.weaponDamage = acidFlaskDamage
 alchemistbacids.persDamageDice = acidFlaskPersDamage
 #alchemistbacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
 alchemistbacids.splashDamage = bomberSplashDamage
+alchemistbacids.persDamageType = Acid
 
 alchemistbsacids = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbsacids.isWeapon = False
@@ -2220,6 +2414,7 @@ alchemistbsacids.persDamageDice = acidFlaskPersDamage
 #alchemistbsacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
 alchemistbsacids.splashDamage = bomberSplashDamage
 alchemistbsacids.stickybombLevel = 8
+alchemistbsacids.persDamageType = Acid
 
 alchemistpacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistpacids.isWeapon = False
@@ -2227,6 +2422,7 @@ alchemistpacids.weaponDamage = pacidFlaskDamage
 alchemistpacids.persDamageDice = pacidFlaskPersDamage
 #alchemistpacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
 alchemistpacids.splashDamage = pbombSplashDamage
+alchemistpacids.persDamageType = Acid
 
 alchemistbpacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpacids.isWeapon = False
@@ -2234,6 +2430,7 @@ alchemistbpacids.weaponDamage = pacidFlaskDamage
 alchemistbpacids.persDamageDice = pacidFlaskPersDamage
 #alchemistbpacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
 alchemistbpacids.splashDamage = pbomberSplashDamage
+alchemistbpacids.persDamageType = Acid
 
 alchemistbpsacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpsacids.isWeapon = False
@@ -2242,6 +2439,7 @@ alchemistbpsacids.persDamageDice = pacidFlaskPersDamage
 #alchemistbpsacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
 alchemistbpsacids.splashDamage = pbomberSplashDamage
 alchemistbpsacids.stickybombLevel = 8
+alchemistbpsacids.persDamageType = Acid
 
 alchemistfires = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistfires.isWeapon = False
@@ -2249,6 +2447,7 @@ alchemistfires.weaponDamageDice = alchemistsFireDamage
 alchemistfires.persDamage = alchemistsFirePersDamage
 #alchemistfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
 alchemistfires.splashDamage = bombSplashDamage
+alchemistfires.persDamageType = Fire
 
 alchemistbfires = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbfires.isWeapon = False
@@ -2256,6 +2455,7 @@ alchemistbfires.weaponDamageDice = alchemistsFireDamage
 alchemistbfires.persDamage = alchemistsFirePersDamage
 #alchemistbfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
 alchemistbfires.splashDamage = bomberSplashDamage
+alchemistbfires.persDamageType = Fire
 
 alchemistbsfires = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbsfires.isWeapon = False
@@ -2264,6 +2464,7 @@ alchemistbsfires.persDamage = alchemistsFirePersDamage
 #alchemistbsfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
 alchemistbsfires.splashDamage = bomberSplashDamage
 alchemistbsfires.stickybombLevel = 8
+alchemistbsfires.persDamageType = Fire
 
 alchemistpfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistpfires.isWeapon = False
@@ -2271,6 +2472,7 @@ alchemistpfires.weaponDamageDice = palchemistsFireDamage
 alchemistpfires.persDamage = palchemistsFirePersDamage
 #alchemistpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
 alchemistpfires.splashDamage = pbombSplashDamage
+alchemistpfires.persDamageType = Fire
 
 alchemistbpfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpfires.isWeapon = False
@@ -2278,6 +2480,7 @@ alchemistbpfires.weaponDamageDice = palchemistsFireDamage
 alchemistbpfires.persDamage = palchemistsFirePersDamage
 #alchemistbpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
 alchemistbpfires.splashDamage = pbomberSplashDamage
+alchemistbpfires.persDamageType = Fire
 
 alchemistbpsfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpsfires.isWeapon = False
@@ -2286,6 +2489,7 @@ alchemistbpsfires.persDamage = palchemistsFirePersDamage
 #alchemistbpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
 alchemistbpsfires.splashDamage = pbomberSplashDamage
 alchemistbpsfires.stickybombLevel = 8
+alchemistbpsfires.persDamageType = Fire
 
 alchemistfrosts = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistfrosts.isWeapon = False
@@ -2302,6 +2506,7 @@ alchemistbsfrosts.isWeapon = False
 alchemistbsfrosts.weaponDamageDice = blfvDamage
 alchemistbsfrosts.splashDamage = bomberSplashDamage
 alchemistbsfrosts.stickybombLevel = 8
+alchemistbsfrosts.persDamageType = Cold
 
 alchemistpfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistpfrosts.isWeapon = False
@@ -2318,6 +2523,7 @@ alchemistbpsfrosts.isWeapon = False
 alchemistbpsfrosts.weaponDamageDiceDice = pblfvDamage
 alchemistbpsfrosts.splashDamage = pbomberSplashDamage
 alchemistbpsfrosts.stickybombLevel = 8
+alchemistbpsfrosts.persDamageType = Cold
 
 alchemistlightnings = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistlightnings.isWeapon = False
@@ -2340,6 +2546,7 @@ alchemistbslightnings.setFFonSuccess(1)
 alchemistbslightnings.weaponDamageDice = blfvDamage
 alchemistbslightnings.splashDamage = bomberSplashDamage
 alchemistbslightnings.stickybombLevel = 8
+alchemistbslightnings.persDamageType = Electricity
 
 alchemistplightnings = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistplightnings.isWeapon = False
@@ -2362,6 +2569,7 @@ alchemistbpslightnings.setFFonSuccess(1)
 alchemistbpslightnings.weaponDamageDice = pblfvDamage
 alchemistbpslightnings.splashDamage = pbomberSplashDamage
 alchemistbpslightnings.stickybombLevel = 8
+alchemistbpslightnings.persDamageType = Electricity
 
 alchemistbestialClawStrike = MeleeStrike(mutagenstrikeAttackBonus, alchemistBestialDamage)
 alchemistbestialClawStrike.weaponDamageDice = bestialClawDamageDice
@@ -2550,6 +2758,7 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
 cantripAS = CantripStrike(cantripAttackBonus, noneDamage)
 cantripAS.weaponDamageDice = cantripASDamageDice
 cantripAS.critPersDamage = cantripASPDamage
+cantripAS.persDamageType = Acid
 
 cantripEA = CantripSave(spellDC, noneDamage)
 cantripEA.weaponDamageDice = cantripRFDamageDice
@@ -2563,6 +2772,7 @@ cantripDL.weaponDamageDice = cantripRFDamageDice
 cantripPF = CantripStrike(cantripAttackBonus, noneDamage)
 cantripPF.weaponDamageDice = cantripRFDamageDice
 cantripPF.critPersDamageDice = cantripPFPDamageDice
+cantripPF.persDamageType = Fire
 
 cantripTP = CantripStrike(cantripAttackBonus, noneDamage)
 cantripTP.weaponDamageDice = cantripTPDamageDice
@@ -2753,7 +2963,101 @@ basic8.weaponDamageDice = spellDamage2d6
 basic9 = Save(spellDC, spellDamage2)
 basic9.weaponDamageDice = spellDamage2d6
 
-hydralicpush = HPSpellStrike(cantripAttackBonus, noneDamage)
+basicr6 = Save(spellDC, noneDamage)
+basicr6.weaponDamageDice = spellDamaged6
+basicr6.targetSave = Reflex
+basicr8 = Save(spellDC, noneDamage)
+basicr8.weaponDamageDice = spellDamaged8
+basicr8.targetSave = Reflex
+basicr10 = Save(spellDC, noneDamage)
+basicr10.weaponDamageDice = spellDamaged10
+basicr10.targetSave = Reflex
+basicr12 = Save(spellDC, noneDamage)
+basicr12.weaponDamageDice = spellDamaged12
+basicr12.targetSave = Reflex
+basicr26 = Save(spellDC, noneDamage)
+basicr26.weaponDamageDice = spellDamage2d6
+basicr26.targetSave = Reflex
+basicr261 = Save(spellDC, spellDamage1)
+basicr261.weaponDamageDice = spellDamage2d6
+basicr261.targetSave = Reflex
+basicr262 = Save(spellDC, spellDamage2)
+basicr262.weaponDamageDice = spellDamage2d6
+basicr262.targetSave = Reflex
+basicr28 = Save(spellDC, noneDamage)
+basicr28.weaponDamageDice = spellDamage2d8
+basicr28.targetSave = Reflex
+basicr210 = Save(spellDC, noneDamage)
+basicr210.weaponDamageDice = spellDamage2d10
+basicr210.targetSave = Reflex
+basicr212 = Save(spellDC, noneDamage)
+basicr212.weaponDamageDice = spellDamage2d12
+basicr212.targetSave = Reflex
+
+basicf6 = Save(spellDC, noneDamage)
+basicf6.weaponDamageDice = spellDamaged6
+basicf6.targetSave = Fort
+basicf8 = Save(spellDC, noneDamage)
+basicf8.weaponDamageDice = spellDamaged8
+basicf8.targetSave = Fort
+basicf10 = Save(spellDC, noneDamage)
+basicf10.weaponDamageDice = spellDamaged10
+basicf10.targetSave = Fort
+basicf12 = Save(spellDC, noneDamage)
+basicf12.weaponDamageDice = spellDamaged12
+basicf12.targetSave = Fort
+basicf26 = Save(spellDC, noneDamage)
+basicf26.weaponDamageDice = spellDamage2d6
+basicf26.targetSave = Fort
+basicf261 = Save(spellDC, spellDamage1)
+basicf261.weaponDamageDice = spellDamage2d6
+basicf261.targetSave = Fort
+basicf262 = Save(spellDC, spellDamage2)
+basicf262.weaponDamageDice = spellDamage2d6
+basicf262.targetSave = Fort
+basicf28 = Save(spellDC, noneDamage)
+basicf28.weaponDamageDice = spellDamage2d8
+basicf28.targetSave = Fort
+basicf210 = Save(spellDC, noneDamage)
+basicf210.weaponDamageDice = spellDamage2d10
+basicf210.targetSave = Fort
+basicf212 = Save(spellDC, noneDamage)
+basicf212.weaponDamageDice = spellDamage2d12
+basicf212.targetSave = Fort
+
+basicw6 = Save(spellDC, noneDamage)
+basicw6.weaponDamageDice = spellDamaged6
+basicw6.targetSave = Will
+basicw8 = Save(spellDC, noneDamage)
+basicw8.weaponDamageDice = spellDamaged8
+basicw8.targetSave = Will
+basicw10 = Save(spellDC, noneDamage)
+basicw10.weaponDamageDice = spellDamaged10
+basicw10.targetSave = Will
+basicw12 = Save(spellDC, noneDamage)
+basicw12.weaponDamageDice = spellDamaged12
+basicw12.targetSave = Will
+basicw26 = Save(spellDC, noneDamage)
+basicw26.weaponDamageDice = spellDamage2d6
+basicw26.targetSave = Will
+basicw261 = Save(spellDC, spellDamage1)
+basicw261.weaponDamageDice = spellDamage2d6
+basicw261.targetSave = Will
+basicw262 = Save(spellDC, spellDamage2)
+basicw262.weaponDamageDice = spellDamage2d6
+basicw262.targetSave = Will
+basicw28 = Save(spellDC, noneDamage)
+basicw28.weaponDamageDice = spellDamage2d8
+basicw28.targetSave = Will
+basicw210 = Save(spellDC, noneDamage)
+basicw210.weaponDamageDice = spellDamage2d10
+basicw210.targetSave = Will
+basicw212 = Save(spellDC, noneDamage)
+basicw212.weaponDamageDice = spellDamage2d12
+basicw212.targetSave = Will
+
+hydralicpush = SpellStrike(cantripAttackBonus, noneDamage)
+hydralicpush.doubleDamage  = False
 hydralicpush.weaponDamageDice = {i: [d6] + spellDamage2d6[i] for i in range(1,21)}
 hydralicpush.critDamageDice = {i: [d6,d6,d6] for i in range(1,21)}
 
@@ -2764,11 +3068,15 @@ shockinggraspm  =SpellStrike(cantripAttackBonus, noneDamage)
 shockinggraspm.weaponDamageDice = {i: [d12]+spellDamaged12[i] for i in range(1,21)}
 shockinggraspm.persDamageDice = {i: [d4] for i in range(1,21)}
 shockinggraspm.persDamage = {i: max(0,int((i-1)/2)) for i in range(1,21)}
+shockinggraspm.doublePersDamage = False
+shockinggraspm.persDamageType = Electricity
 
 acidarror = SpellStrike(cantripAttackBonus, noneDamage)
 acidarror.minSpellLevel = 2
 acidarror.weaponDamageDice = {i: [d8] + int(sDice[i]/2)*[d8,d8] for i in range(3,21)}
 acidarror.persDamageDice = {i: int(sDice[i]/2)*[d6] for i in range(3,21)}
+acidarror.doublePersDamage = False
+acidarror.persDamageType  = Acid
 
 lightningbolt = Save(spellDC, noneDamage)
 lightningbolt.minSpellLevel = 3
@@ -2778,15 +3086,22 @@ chainlightning = Save(spellDC, noneDamage)
 chainlightning.minSpellLevel = 6
 chainlightning.weaponDamageDice = {i: [d12,d12] + spellDamaged12[i] for i in range(11,21)}
 
-phantompain = PhantomPainSave(spellDC, noneDamage)
+phantompain = Save(spellDC, noneDamage)
+phantompain.doubleDamage = False
+phantompain.doublePersDamage = False
+phantompain.halveDamage = False
 phantompain.weaponDamageDice = spellDamage2d4
 phantompain.persDamageDice = spellDamaged4
-phantompain.failDebuffTarget = 1
-phantompain.critFailDebuffTarget = 2
+phantompain.goodSickened = 1
+phantompain.veryGoodSickened = 2
+phantompain.targetSave = Will
+phantompain.persDamageType = Mental
 
 grimtendrils = Save(spellDC, noneDamage)
 grimtendrils.weaponDamageDice = spellDamage2d4
 grimtendrils.persDamage = spellDamage1
+grimtendrils.targetSave = Fort
+grimtendrils.persDamageType = Bleed
 
 wallfire = Effect(noneDamage)
 wallfire.isSpell = True
@@ -2799,35 +3114,55 @@ phantasmalkiller.minSpellLevel = 4
 phantasmalkiller.failureDamageDice = {i: [d6,d6,d6,d6] for i in range(1,21)}
 phantasmalkiller.weaponDamageDice = spellDamage2d6
 phantasmalkiller.critDamageDice = {i: sDice[i]*3*[d6] for i in range(1,21)}
-phantasmalkiller.successDebuffTarget = 1
-phantasmalkiller.failDebuffTarget = 2
-phantasmalkiller.critFailDebuffTarget = 4
+phantasmalkiller.okayFrightened = 1
+phantasmalkiller.goodFrightened = 2
+phantasmalkiller.veryGoodFrightened = 4
+phantasmalkiller.targetSave = Will
 
 phantasmalcalamity = Save(spellDC, noneDamage)
 phantasmalcalamity.minSpellLevel = 6
 phantasmalcalamity.weaponDamageDice = {i: spellDamage2d6[i-2] + [d6] for i in range(11,21)}
+phantasmalcalamity.targetSave = Will
 
 spiritblast = Save(spellDC, noneDamage)
 spiritblast.minSpellLevel = 6
 spiritblast.weaponDamageDice = {i: spellDamage2d6[i] + 4*[d6] for i in range(11,21)}
+spiritblast.targetSave = Fort
 
 weird = Save(spellDC, noneDamage)
 weird.minSpellLevel = 9
 weird.weaponDamageDice = {i: 16*[d6] for i in range(17,21)}
-weird.successDebuffTarget = 1
-weird.failDebuffTarget = 2
-weird.critFailDebuffTarget = 2
+weird.okayFrightened = 1
+weird.goodFrightened = 2
+weird.veryGoodFrightened = 2
+weird.targetSave = Will
 
 visionsdanger = Save(spellDC, noneDamage)
 visionsdanger.minSpellLevel = 7
 visionsdanger.weaponDamageDice = {i: [d8] + spellDamaged8[i] for i in range(13,21)}
+visionsdanger.targetSave = Will
 
+heal = Effect(noneDamage)
+heal.weaponDamageDice = spellDamaged8
+heal2 = Effect(spellDamage8)
+heal2.weaponDamageDice = spellDamaged8
+heal10 = Effect(noneDamage)
+heal10.weaponDamageDice = spellDamaged10
+heal210 = Effect(spellDamage8)
+heal210.weaponDamageDice = spellDamaged10
+
+harm = Save(spellDC, noneDamage)
+harm.weaponDamageDice = spellDamaged8
+harm.targetSave = Fort
+harm10 = Save(spellDC, noneDamage)
+harm10.weaponDamageDice = spellDamaged10
+harm10.targetSave = Fort
 warpriestHarm = Save(warpriestDC, noneDamage)
 warpriestHarm.weaponDamageDice = spellDamaged8
-warpriestHarm.isSpell = True
+warpriestHarm.targetSave = Fort
 warpriestHarm10 = Save(warpriestDC, noneDamage)
 warpriestHarm10.weaponDamageDice = spellDamaged10
-warpriestHarm10.isSpell = True
+warpriestHarm10.targetSave = Fort
 
 dangeroussorcerery = Effect(noneDamage)
 dangeroussorcerery.isSpell = True
@@ -2835,63 +3170,144 @@ dangeroussorcerery.addDamage = spellDamage1
 
 debuffAttack123 = Save(spellDC, noneDamage)
 debuffAttack123.isSpell = False
-debuffAttack123.successDebuffAttack = 1
-debuffAttack123.failDebuffAttack = 2
-debuffAttack123.critFailDebuffAttack = 3
-
-debuffAttack124 = Save(spellDC, noneDamage)
-debuffAttack124.isSpell = False
-debuffAttack124.successDebuffAttack = 1
-debuffAttack124.failDebuffAttack = 2
-debuffAttack124.critFailDebuffAttack = 4
-
-debuffAttack122 = Save(spellDC, noneDamage)
-debuffAttack122.isSpell = False
-debuffAttack122.successDebuffAttack = 1
-debuffAttack122.failDebuffAttack = 2
-debuffAttack122.critFailDebuffAttack = 2
+debuffAttack123.okayDebuffAttack = 1
+debuffAttack123.goodDebuffAttack = 2
+debuffAttack123.veryGoodFailDebuffAttack = 3
+debuffAttack123.targetSave = Will
 
 debuffAttack012 = Save(spellDC, noneDamage)
 debuffAttack012.isSpell = False
-debuffAttack012.successDebuffAttack = 0
-debuffAttack012.failDebuffAttack = 1
-debuffAttack012.critFailDebuffAttack = 2
+debuffAttack012.okayDebuffAttack = 0
+debuffAttack012.goodDebuffAttack = 1
+debuffAttack012.veryGoodFailDebuffAttack = 2
+debuffAttack012.targetSave = Will
 
-debuffTarget123 = Save(spellDC, noneDamage)
-debuffTarget123.isSpell = False
-debuffTarget123.successDebuffTarget = 1
-debuffTarget123.failDebuffTarget = 2
-debuffTarget123.critFailDebuffTarget = 3
+frightenedSave123 = Save(spellDC, noneDamage)
+frightenedSave123.isSpell = False
+frightenedSave123.okayFrightened = 1
+frightenedSave123.goodFrightened = 2
+frightenedSave123.veryGoodFrightened = 3
+frightenedSave123.targetSave = Will
 
-debuffTarget012 = Save(spellDC, noneDamage)
-debuffTarget012.isSpell = False
-debuffTarget012.successDebuffTarget = 0
-debuffTarget012.failDebuffTarget = 1
-debuffTarget012.critFailDebuffTarget = 2
+frightenedSave012 = Save(spellDC, noneDamage)
+frightenedSave012.isSpell = False
+frightenedSave012.okayFrightened = 0
+frightenedSave012.goodFrightened = 1
+frightenedSave012.veryGoodFrightened = 2
+frightenedSave012.targetSave = Will
 
 disintigrateAttack = SpellStrikeFilter(cantripAttackBonus,noneDamage)
 disintigrateSave = Save(spellDC, noneDamage)
 disintigrateSave.minSpellLevel = 6
 disintigrateSave.weaponDamageDice = spellDamage2d12
+disintigrateSave.targetSave = Fort
 
-debuffAttackDamage123 = Save(spellDC, noneDamage)
-debuffAttackDamage123.isSpell = False
-debuffAttackDamage123.successDebuffAttack = 1
-debuffAttackDamage123.failDebuffAttack = 2
-debuffAttackDamage123.critFailDebuffAttack = 3
-debuffAttackDamage123.successDebuffDamage = 1
-debuffAttackDamage123.failDebuffDamage = 2
-debuffAttackDamage123.critFailDebuffDamage = 3
+enfeebleSave123 = Save(spellDC, noneDamage)
+enfeebleSave123.isSpell = False
+enfeebleSave123.okayEnfeebled = 1
+enfeebleSave123.goodEnfeebled = 2
+enfeebleSave123.veryGoodEnfeebled = 3
+enfeebleSave123.targetSave = Fort
 
+fingerofdeath = Save(spellDC, spellDamage10)
+fingerofdeath.minSpellLevel = 7
+fingerofdeath.targetSave = Fort
 
+meteorSwarm = Save(spellDC, noneDamage)
+meteorSwarm.weaponDamageDice = {i: (sDice[i]-9)*[d10,d6,d6] + 6*[d10] + 14*[d6] for i in range(17,21)}
+meteorSwarm.minSpellLevel = 9
 
-spellAttackSwitcher = {'Basic Save 1d8': [basic45],
-                       'Basic Save 1d10': [basic55],
-                       'Basic Save 2d6': [basic7],
-                'Basic Save 2d6+1': [basic8],
-                'Basic Save 2d6+2': [basic9],
+polarRay = SpellStrike(cantripAttackBonus, noneDamage)
+polarRay.minSpellLevel = 8
+polarRay.goodDrained = 2
+polarRay.veryGoodDrained = 2
+polarRay.doubleDamage = False
+polarRay.weaponDamageDice = {i: (sDice[i]-8)*[d8,d8] + 10*[d8] for i in range(15,21)}
+
+horridWilting = Save(spellDC, noneDamage)
+horridWilting.minSpellLevel = 8
+horridWilting.weaponDamageDice = {i: spellDamaged10[i] + [d10,d10] for i in range(15,21)}
+horridWilting.targetSave = Fort
+
+eclipseBurst = Save(spellDC, noneDamage)
+eclipseBurst.minSpellLevel = 7
+eclipseBurst.weaponDamageDice = {i: spellDamaged10[i]+[d10]+spellDamaged4[i]+[d4] for i in range(13,21)}
+
+sunburst = Save(spellDC, noneDamage)
+sunburst.minSpellLevel = 7
+sunburst.weaponDamageDice = {i: spellDamaged10[i]+[d10]+spellDamaged10[i]+[d10] for i in range(13,21)}
+sunburst.doubleDamage = False
+
+flamingSphere = Save(spellDC, noneDamage)
+flamingSphere.minSpellLevel = 2
+flamingSphere.weaponDamageDice = {i: spellDamaged6[i] + [d6] for i in range(3,21)}
+flamingSphere.damageOnSuccesSave = False
+
+spiritualWeapon = CantripStrike(cantripAttackBonus, noneDamage)
+spiritualWeapon.isSpell = True
+spiritualWeapon.minSpellLevel = 2
+spiritualWeapon.weaponDamageDice = {i: int(sDice[i]/2)*[d8] for i in range(3,21)}
+
+searingLight = SpellStrike(cantripAttackBonus, noneDamage)
+searingLight.minSpellLevel = 3
+searingLight.weaponDamageDice = {i: (sDice[i]-3)*[d6,d6] + 5*[d6] for i in range(5,21)}
+searingLight2 = SpellStrike(cantripAttackBonus, noneDamage)
+searingLight2.minSpellLevel = 3
+searingLight2.weaponDamageDice = {i: (sDice[i]-3)*[d6,d6,d6,d6] + 10*[d6] for i in range(5,21)}
+
+holyCascade = Save(spellDC, noneDamage)
+holyCascade.weaponDamageDice = {i: (sDice[i]-4)*[d6] + 3*[d6] for i in range(7,21)}
+holyCascade.minSpellLevel = 4
+holyCascade2 = Save(spellDC, noneDamage)
+holyCascade2.weaponDamageDice = {i: (sDice[i]-4)*3*[d6] + 9*[d6] for i in range(7,21)}
+holyCascade2.minSpellLevel = 4
+
+divineWrath = Save(spellDC, noneDamage)
+divineWrath.minSpellLevel = 4
+divineWrath.weaponDamageDice = spellDamaged10
+divineWrath.targetSave = Fort
+divineWrath.goodSickened = 1
+divineWrath.veryGoodSickened = 2
+
+spellAttackSwitcher = {'Basic Reflex 1d6': [basicr6],
+                       'Basic Reflex 1d8': [basicr8],
+                       'Basic Reflex 1d10': [basicr10],
+                       'Basic Reflex 1d12': [basicr12],
+                       'Basic Reflex 2d6': [basicr26],
+                'Basic Reflex 2d6+1': [basicr261],
+                'Basic Reflex 2d6+2': [basicr262],
+                'Basic Reflex 2d8': [basicr28],
+                'Basic Reflex 2d10': [basicr210],
+                'Basic Reflex 2d12': [basicr212],
+                'Basic Fort 1d6': [basicf6],
+                       'Basic Fort 1d8': [basicf8],
+                       'Basic Fort 1d10': [basicf10],
+                       'Basic Fort 1d12': [basicf12],
+                       'Basic Fort 2d6': [basicf26],
+                'Basic Fort 2d6+1': [basicf261],
+                'Basic Fort 2d6+2': [basicf262],
+                'Basic Fort 2d8': [basicf28],
+                'Basic Fort 2d10': [basicf210],
+                'Basic Fort 2d12': [basicf212],
+                'Basic Will 1d6': [basicw6],
+                       'Basic Will 1d8': [basicw8],
+                       'Basic Will 1d10': [basicw10],
+                       'Basic Will 1d12': [basicw12],
+                       'Basic Will 2d6': [basicw26],
+                'Basic Will 2d6+1': [basicw261],
+                'Basic Will 2d6+2': [basicw262],
+                'Basic Will 2d8': [basicw28],
+                'Basic Will 2d10': [basicw210],
+                'Basic Will 2d12': [basicw212],
+                
                 'Magic Missle': [magicmissle],
                 'True Strike': [truestrike],
+                'Heal': [heal],
+                'd10 Heal': [heal10],
+                '2action Heal': [heal2],
+                '2action d10 Heal': [heal210],
+                'Harm':[harm],
+                'd10 Harm':[harm10],
                 'Warpriest Harm':[warpriestHarm],
                 'Warpriest d10 Harm':[warpriestHarm10],
                 'Dangerous Sorcery': [dangeroussorcerery],
@@ -2901,7 +3317,14 @@ spellAttackSwitcher = {'Basic Save 1d8': [basic45],
                 'Shocking Grasp Metal': [shockinggraspm],
                 'Hydralic Push': [hydralicpush],
                 'Acid Arrow': [acidarror],
+                'Flaming Sphere': [flamingSphere],
+                'Spiritual Weapon': [spiritualWeapon],
+                'Searing Light': [searingLight],
+                'Searing Light vs Fiend': [searingLight2],
                 'Lightning Bolt': [lightningbolt],
+                'Holy Cascade': [holyCascade],
+                'Holy Cascade vs Fiend': [holyCascade2],
+                'Divine Wrath': [divineWrath],
                 'Phantasmal Killer': [phantasmalkiller],
                 'Pantasmal Calamity': [phantasmalcalamity],
                 'Spirit Blast': [spiritblast],
@@ -2909,12 +3332,40 @@ spellAttackSwitcher = {'Basic Save 1d8': [basic45],
                 'Visions of Danger': [visionsdanger],
                 'Wall of Fire': [wallfire],
                 'Fear: Debuff Attacker(123)': [debuffAttack123],
-                'Fear: Debuff Target(123)': [debuffTarget123],
+                'Fear: Debuff Target(123)': [frightenedSave123],
                 'Debuff Attacker(012)': [debuffAttack012],
-                'Debuff Target(012)': [debuffTarget012],
+                'Debuff Target(012)': [frightenedSave012],
                 'Disintigrate Attack': [disintigrateAttack],
                 'Disintigrate Save': [disintigrateSave],
-                'Enfeeblement Save': [debuffAttackDamage123]}
+                'Enfeeblement Attack': [disintigrateAttack],
+                'Enfeeblement Save': [enfeebleSave123],
+                'Finger of Death': [fingerofdeath],
+                'Meteor Swarm': [meteorSwarm],
+                'Polar Ray':[polarRay],
+                'Horrid Wilting': [horridWilting],
+                'Eclipse Burst': [eclipseBurst],
+                'Sunburst': [sunburst]
+                }
+
+elementalToss = SpellStrike(cantripAttackBonus, spellDamage1)
+elementalToss.weaponDamageDice = spellDamaged8
+
+fireRay = SpellStrike(cantripAttackBonus, noneDamage)
+fireRay.weaponDamageDice = spellDamage2d6
+fireRay.critPersDamageDice = spellDamaged4
+fireRay.persDamageType = Fire
+
+tempestSurge = Save(spellDC, noneDamage)
+tempestSurge.weaponDamageDice = spellDamaged6
+tempestSurge.goodClumsy  = 2
+tempestSurge.veryGoodClumsy = 2
+tempestSurge.persDamage  = spellDamage1
+tempestSurge.persDamageType = Electricity
+focusSpellAttackSwitcher = {'Elemental Toss': [elementalToss],
+                            'Fire Ray': [fireRay],
+                            'Force Bolt': [magicmissle],
+                            'Tempest Surge': [tempestSurge]
+        }
 
 maxfeint = Feint(maxSkillBonus)
 trainedfeint = Feint(trainedSkillBonus)
@@ -2943,4 +3394,5 @@ attackSwitcher = {**alchemistAttackSwitcher,
                   **monsterAttackSwitcher,
                   **effectAttackSwitcher,
                   **spellAttackSwitcher,
+                  **focusSpellAttackSwitcher,
                   **skillAttackSwitcher}
