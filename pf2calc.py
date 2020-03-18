@@ -347,7 +347,10 @@ class Context:
                 if result.ignoreNext:
                     self.ignoreNext = True
                     
-                self.thisStrikeBonus = max(self.thisStrikeBonus, result.nextStrikeBonus)
+                if not result.setAttack is None:
+                    self.setAttack = result.setAttack
+                    
+                self.thisStrikeBonus += result.nextStrikeBonus
                 
                     
                 if result.addfirsthitdamageDice != 0:
@@ -414,7 +417,10 @@ class Context:
 #                damageDist.add(result.splashDamDice, result.splashDam)
 #                
                 self.damageDistributions.add(damageDist)
-                self.persDistributions.selectMax(persDist)
+                if CombinedAttack.PersistentReRoll:
+                    self.persDistributions.selectMax(persDist)
+                else:
+                    self.persDistributions.combineMax(persDist)
                 
                 # modified by how much we care about pers damage
                 #pdWeight = int(CombinedAttack.PDWeight)
@@ -433,6 +439,8 @@ class Context:
         self.trueStrike = False
         self.treatWorse = False
         self.ignoreNext = False
+        self.setAttack = None
+        
         self.attackBonus = 0
         
         self.clumsy = 0
@@ -470,6 +478,8 @@ class Context:
         self.origffstatus = oldContext.origffstatus
         self.treatWorse = False
         self.ignoreNext = False
+        self.setAttack = oldContext.setAttack
+        
         self.attackBonus = oldContext.attackBonus
             
         self.debuffAttack = oldContext.debuffAttack
@@ -608,7 +618,11 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
             keenStatus = False
             trueStrike = False
             if(isinstance(atk, Strike)):
-                totalBonus = atk.getAttack(level)
+                if context.setAttack is None:
+                    totalBonus = atk.getAttack(level)
+                else:
+                    totalBonus = context.setAttack
+                    context.setAttack = None
                 totalBonus += context.getStrikeBonus(atk.isSpell)
                 keenStatus = atk.getKeen(level)
                 trueStrike = context.hasTrueStrike()
@@ -760,9 +774,9 @@ def graphChanceDamage(routine, target, level, levelDiff, attackBonus, damageBonu
     chanceList = []
     
     if type(routine) is CombinedAttack:
-        # what if it contains more combined attacks?
-        print("not implimented")
-        raise Exception("Can't handle Combinded Attacks")
+        for atk in routine.validFor(level):
+            return graphChanceDamage(atk, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus, displayPersistent)
+            
     
     contextList = generateContextList(routine, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus)
         

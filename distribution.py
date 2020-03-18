@@ -134,7 +134,7 @@ class Distribution:
         else:
             return sum(self.dist[0:(number-self.minimum+1)])
         
-    def selectMax(self, d2):
+    def combineMax(self, d2):
         d1 = self
         minimum = max(d1.minimum,d2.minimum)
         maximum = max(d1.maximum(),d2.maximum())
@@ -148,6 +148,11 @@ class Distribution:
             i += 1
         self.minimum = minimum
         self.dist = newDist
+        
+    def selectMax(self, d2):
+        if d2.average() > self.average():
+            self.minimum = d2.minimum
+            self.dist = d2.dist
         
     def generate(self):
         for d, chance in enumerate(self.dist):
@@ -187,6 +192,14 @@ class DistributionsByType:
             self.distributions[damageType].combine(distribution)
         else:
             self.distributions[damageType] = distribution
+            
+    def combineMax(self, distribution):
+        damageType = distribution.type
+        if damageType in self.distributions:
+            self.distributions[damageType].combineMax(distribution)
+        else:
+            self.distributions[damageType] = distribution
+            
     def selectMax(self, distribution):
         damageType = distribution.type
         if damageType in self.distributions:

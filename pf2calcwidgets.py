@@ -117,7 +117,7 @@ attackBonus = widgets.BoundedIntText(
 )
 damageBonus = widgets.BoundedIntText(
     value=0.0,
-    min=-20.0,
+    min=-50.0,
     max=50.0,
     step=1.0,
     description='Weakness:',
@@ -141,6 +141,12 @@ persistentDamageWeightBox = widgets.BoundedFloatText(
     description='Persistent Damage Weight',
     disabled=False,
     layout=widgets.Layout(width='auto')
+)
+
+persistentDamageReroll = widgets.Checkbox(
+        value=False,
+        description="Reroll Persistent Damage Every time:",
+        layout=widgets.Layout(width='12%')
 )
 
 flatfootedBox = widgets.BoundedIntText(
@@ -446,8 +452,21 @@ criticalSpecialization = widgets.Dropdown(
         layout=widgets.Layout(width='auto')
 )
 
-featureOptions = ["1d6 Rune",
+featureOptions = ["1d12 Rune",
+                  "1d10 Rune",
+                  "1d8 Rune",
+                  "1d6 Rune",
                  "1d4 Rune",
+                 "+1 attack",
+                 "+2 attack",
+                 "+3 attack",
+                 "+4 attack",
+                 "+5 attack",
+                 "-1 attack",
+                 "-2 attack",
+                 "-3 attack",
+                 "-4 attack",
+                 "-5 attack",
                  "backswing",
                  "keen"]
 
@@ -599,6 +618,8 @@ classSelector = widgets.Dropdown(
 )
 alchemistOptions = ['Alchemist Melee Strike',
                     'Alchemist Ranged Strike',
+                    'Quicksilver Mutagen',
+                    'Quicksilver Spell Attack',
                     'Alchemist Bestial Claw',
                     'Alchemist Bestial Jaw',
                     'Alchemist Feral Claw',
@@ -651,6 +672,12 @@ clericOptions = ['Caster Strike',
                  'Warpriest Strike',
                  'Warpriest Smite',
                  'Bespell Weapon',
+                 'Heal',
+                'd10 Heal',
+                '2action Heal',
+                '2action d10 Heal',
+                'Harm',
+                'd10 Harm',
                  'Warpriest Harm',
                  'Warpriest d10 Harm']
 druidOptions = ['Caster Strike',
@@ -663,6 +690,7 @@ druidOptions = ['Caster Strike',
                 'Wildshape Dragon',
                 'Wildshape Monster',
                 'Wildshape Incarnate',
+                'Ani-Elem-Mons-Inc',
                 'Wildshape AnimalR',
                 'Wildshape InsectR',
                 'Wildshape DinoR',
@@ -671,7 +699,8 @@ druidOptions = ['Caster Strike',
                 'Wildshape PlantR',
                 'Wildshape DragonR',
                 'Wildshape MonsterR',
-                'Wildshape IncarnateR'
+                'Wildshape IncarnateR',
+                'Ani-Elem-Mons-IncR'
                 ]
 fighterOptions = ['Fighter Melee Strike',
                   'Fighter Exacting Strike',
@@ -724,7 +753,8 @@ summonOptions = ['Summon Animal',
                 'Summon Dragon']
 effectOptions = ['Flat Foot Target',
                  'Flat Foot Next Strike']
-debuffSpellOptions = ['Enfeeblement Attack',
+debuffSpellOptions = ['Heroism',
+                      'Enfeeblement Attack',
                       'Enfeeblement Save',
                       'Fear: Debuff Attacker(123)',
                 'Fear: Debuff Target(123)',
@@ -1013,7 +1043,7 @@ def on_minButton_clicked(b):
         selections.options = l
         updateEDBLGraph()
     
-    if len(selections.value) ==2:
+    if len(selections.value) >=2:
         oldNames = selections.value
         Selector.minSelections(newName, oldNames)
         
@@ -1047,7 +1077,7 @@ def on_maxButton_clicked(b):
         selections.options = l
         updateEDBLGraph()
     
-    if len(selections.value) ==2:
+    if len(selections.value) >=2:
         oldNames = selections.value
         Selector.maxSelections(newName, oldNames)
         
@@ -1106,6 +1136,12 @@ difButton.on_click(on_difButton_clicked)
 
 newNameBox = widgets.Text(value="",layout=widgets.Layout(width='auto'))
 
+data = []
+printButton = widgets.Button(description="Print Data")
+def on_printButton_clicked(b):
+    print(data)
+printButton.on_click(on_printButton_clicked)
+
 g = go.FigureWidget() 
 g.update_layout(title_text="Expected damage by level",
                   title_font_size=20,
@@ -1117,7 +1153,9 @@ g.update_layout(title_text="Expected damage by level",
 #g.layout.yaxis.range = [0,60]
 
 def updateEDBLGraph():
+    global data
     CombinedAttack.PDWeight = persistentDamageWeightBox.value
+    CombinedAttack.PersistentReRoll = persistentDamageReroll.value
     targetText = " Target w/ AC:" + str(targetACSelector.value) + " F:" + str(targetFortSelector.value) + " R:" + str(targetRefSelector.value)  + " W:" + str(targetWillSelector.value) + " P:" + str(targetPerSelector.value)
     if byLevelView.value and (levelViewSelector.value == 'Damage Distribution' or levelViewSelector.value == 'Cumulative Distribution'):
         if percentageView.value == 'Expected Persistent Damage':
@@ -1159,6 +1197,7 @@ def updateEDBLGraph():
         
         with g.batch_update():
             g.data = []
+            data = [xLists,yLists,nameList]
             if levelViewSelector.value == 'Cumulative Distribution':
                 for i in range(len(xLists)):
                     g.add_trace(go.Scatter(x=xLists[i],y=yLists[i],name=nameList[i]))
@@ -1291,6 +1330,7 @@ def updateEDBLGraph():
             
     with g.batch_update():
         g.data = []
+        data = [xLists,yLists,nameList]
         for i in range(len(xLists)):
             g.add_trace(go.Scatter(x=xLists[i],y=yLists[i],name=nameList[i]))
         
@@ -1346,6 +1386,7 @@ byLevelView.observe(edblResponse, names="value")
 levelSelector.observe(edblResponse, names="value")
 levelViewSelector.observe(edblResponse, names="value")
 persistentDamageWeightBox.observe(edblResponse, names="value")
+persistentDamageReroll.observe(edblResponse, names="value")
 
 targetACSelector.observe(targetACChangedResponse, names="value")
 targetSavesSelector.observe(targetSavesChangedResponse, names="value")
@@ -1366,7 +1407,7 @@ classSelector.observe(classSelectorResponse, names="value")
 
 targetRow = widgets.HBox([levelDiff, targetACSelector, targetFortSelector, targetRefSelector,targetWillSelector, targetPerSelector])
 debuffs = widgets.HBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
-adjustments = widgets.HBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox]) #weakness, applyDebuffs
+adjustments = widgets.HBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox,persistentDamageReroll]) #weakness, applyDebuffs
 levelViewRow = widgets.HBox([percentageView,byLevelView,levelSelector,levelViewSelector])
 
     # no ,mapSelection
@@ -1388,4 +1429,5 @@ ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
               levelViewRow,
               g,
              selectorRow,
-             selectionsBox])
+             selectionsBox,
+             printButton])
