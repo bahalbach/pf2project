@@ -376,6 +376,13 @@ for i in sProf:
     if i >= 19:
         sProf[i] +=2
         
+acProf = {i: i+2 for i in range(1,21)}
+for i in acProf:
+    if i >= 9:
+        acProf[i] += 2
+    if i >= 17:
+        acProf[i] += 2
+        
 wsProf = {i: i+2 for i in range(1,21)}
 for i in wsProf:
     if i >= 11:
@@ -470,6 +477,7 @@ for i in range(8,21):
 pbombAttackBonus = {i: wProf[i]  + miBonus[i]-2 for i in range(1,21)}
 mutagenstrikeAttackBonus = {i: wProf[i]  + miBonus[i] for i in range(1,21)}
 mutagenspellstrikeAttackBonus = {i: sProf[i]  + miBonus[i] for i in range(1,21)}
+alchDC = {i: acProf[i] + 10 for i in range(1,21)}
 
 fighterAttackBonus = {i: fProf[i]  + wiBonus[i] for i in range(1,21)}
 
@@ -2271,6 +2279,16 @@ class CantripSave(Save):
     def setSecondaryAS(self, score):
         return False
     
+class EnergySave(Save):
+    def __init__(self, dc, damage):
+        super().__init__(dc, damage)
+        self.prim = False
+        self.sec = False
+        self.isSpell = False
+        self.targetSave = Reflex
+        
+    def setPrimaryAS(self, score):
+        return False
     
 class PKSave(Save):
     def __init__(self, dc, damage):
@@ -2519,6 +2537,21 @@ alchemistRangedStrike = RangedStrike(warpriestAttackBonus, alchemistRangedDamage
 quicksilverMutagen = Quicksilver(mutagenstrikeAttackBonus)
 quicksilverMutagenSpellAttack = Quicksilver(mutagenspellstrikeAttackBonus)
 
+energyDC = {i: 25 for i in range(11,21)}
+for i in range(17,21):
+    energyDC[i] = 32
+energyDamage = {i: 12*[d6] for i in range(11,21)}
+for i in range(17,21):
+    energyDamage[i] = 18*[d6]
+energyMutagenAttack = EnergySave(energyDC, noneDamage)
+energyMutagenAttack.minL = 11
+energyMutagenAttack.weaponDamageDice = energyDamage
+
+powerfulEnergyAttack = Save(alchDC, noneDamage)
+powerfulEnergyAttack.minL = 11
+powerfulEnergyAttack.weaponDamageDice = energyDamage
+powerfulEnergyAttack.isSpell = False
+
 alchemistacids = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistacids.isWeapon = False
 alchemistacids.weaponDamage = acidFlaskDamage
@@ -2715,6 +2748,8 @@ alchemistAttackSwitcher = {'Alchemist Melee Strike': [alchemistStrike],
                     'Alchemist Ranged Strike': [alchemistRangedStrike],
                     'Quicksilver Mutagen': [quicksilverMutagen],
                     'Quicksilver Spell Attack': [quicksilverMutagenSpellAttack],
+                    'Energy Mutagen Breath': [energyMutagenAttack],
+                    'Powerful Energy Breath': [powerfulEnergyAttack],
                     'Alchemist Bestial Claw': [alchemistbestialClawStrike],
                     'Alchemist Bestial Jaw': [alchemistbestialJawStrike],
                     'Alchemist Feral Claw': [alchemistferalClawStrike],
