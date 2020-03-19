@@ -105,6 +105,52 @@ def targetWillChangedResponse(change):
 def targetPerChangedResponse(change):
     Selector.changeTargetPer(targetPerSelector.value)
     updateEDBLGraph() 
+    
+customTarget = widgets.Checkbox(
+        value=False,
+        description="Use Custom Target:"
+        )
+customAC = widgets.BoundedIntText(
+        value=20.0,
+        min=0.0,
+        max=100,
+        description='AC:',
+        layout=widgets.Layout(width='15%')
+        )
+customFort = widgets.BoundedIntText(
+        value=10.0,
+        min=-10.0,
+        max=100,
+        description='Fort:',
+        layout=widgets.Layout(width='15%')
+        )
+customRef = widgets.BoundedIntText(
+        value=10.0,
+        min=-10.0,
+        max=100,
+        description='Reflex:',
+        layout=widgets.Layout(width='15%')
+        )
+customWill = widgets.BoundedIntText(
+        value=10.0,
+        min=-10.0,
+        max=100,
+        description='Will:',
+        layout=widgets.Layout(width='15%')
+        )
+customPer = widgets.BoundedIntText(
+        value=10.0,
+        min=-10.0,
+        max=100,
+        description='Perception:',
+        layout=widgets.Layout(width='15%')
+        )
+def customTargetResponse(change):
+    if customTarget.value:
+        Selector.customTarget(customAC.value,customFort.value,customRef.value,customWill.value,customPer.value)
+    else:
+        Selector.revertCustom()
+    updateEDBLGraph() 
 
 attackBonus = widgets.BoundedIntText(
     value=0.0,
@@ -457,6 +503,8 @@ featureOptions = ["1d12 Rune",
                   "1d8 Rune",
                   "1d6 Rune",
                  "1d4 Rune",
+                 "backswing",
+                 "keen",
                  "+1 attack",
                  "+2 attack",
                  "+3 attack",
@@ -467,8 +515,27 @@ featureOptions = ["1d12 Rune",
                  "-3 attack",
                  "-4 attack",
                  "-5 attack",
-                 "backswing",
-                 "keen"]
+                 "+1 damage",
+                 "+2 damage",
+                 "+3 damage",
+                 "+4 damage",
+                 "+5 damage",
+                 "+6 damage",
+                 "+7 damage",
+                 "+8 damage",
+                 "+9 damage",
+                 "+10 damage",
+                 "-1 damage",
+                 "-2 damage",
+                 "-3 damage",
+                 "-4 damage",
+                 "-5 damage",
+                 "-6 damage",
+                 "-7 damage",
+                 "-8 damage",
+                 "-9 damage",
+                 "-10 damage"
+                 ]
 
 featureSelection1 = widgets.Dropdown(
         options=featureOptions,
@@ -1137,13 +1204,27 @@ def on_difButton_clicked(b):
 difButton.on_click(on_difButton_clicked)
 
 newNameBox = widgets.Text(value="",layout=widgets.Layout(width='auto'))
-
+printBox = widgets.Textarea(value="",
+                            placeholder="print data")
 data = []
 printButton = widgets.Button(description="Print Data")
 def on_printButton_clicked(b):
-    print(data)
+    printBox.value = str(data)
 printButton.on_click(on_printButton_clicked)
 
+printSelectionButton = widgets.Button(description="Print Selection Info")
+def on_printSelectionButton_clicked(b):
+    selectionData = []
+    if(selections.value and selections.value[0]):
+        v = selections.value[0]
+        selectionData = Selector.getSelectionInfo(v)
+        printBox.value = v + ": \n" + str(selectionData)
+printSelectionButton.on_click(on_printSelectionButton_clicked)
+    
+    
+    
+    
+    
 g = go.FigureWidget() 
 g.update_layout(title_text="Expected damage by level",
                   title_font_size=20,
@@ -1158,7 +1239,10 @@ def updateEDBLGraph():
     global data
     CombinedAttack.PDWeight = persistentDamageWeightBox.value
     CombinedAttack.PersistentReRoll = persistentDamageReroll.value
-    targetText = " Target w/ AC:" + str(targetACSelector.value) + " F:" + str(targetFortSelector.value) + " R:" + str(targetRefSelector.value)  + " W:" + str(targetWillSelector.value) + " P:" + str(targetPerSelector.value)
+    if customTarget.value:
+        targetText = " Target w/ AC:" + str(customAC.value) + " F:" + str(customFort.value) + " R:" + str(customRef.value)  + " W:" + str(customWill.value) + " P:" + str(customPer.value)
+    else:
+        targetText = " Target w/ AC:" + str(targetACSelector.value) + " F:" + str(targetFortSelector.value) + " R:" + str(targetRefSelector.value)  + " W:" + str(targetWillSelector.value) + " P:" + str(targetPerSelector.value)
     if byLevelView.value and (levelViewSelector.value == 'Damage Distribution' or levelViewSelector.value == 'Cumulative Distribution'):
         if percentageView.value == 'Expected Persistent Damage':
             displayPersistent = True
@@ -1220,14 +1304,21 @@ def updateEDBLGraph():
     
     if byLevelView.value:
         if levelViewSelector.value == 'Expected Damage by AC':
-            xLists, xLists2, yLists, pyLists, hitsLists, critsLists, debuffLists, nameList = createLevelTraces(levelDiff.value, 
+            xLists, yLists, pyLists, hitsLists, critsLists, debuffLists, nameList = createLevelTraces(levelDiff.value, 
                                             flatfootedBox.value, 
                                             attackBonus.value,
                                             damageBonus.value,
                                             weakness.value,
                                             levelSelector.value)
             titleText="For lvl" + str(levelSelector.value) + " vs lvl" + str(levelSelector.value+levelDiff.value) + targetText
-            xaxisText="vs AC"  
+            ac = " AC:"+str(Selector.selectedTarget.getAC(levelSelector.value+levelDiff.value))
+            fort = " Fort:"+str(Selector.selectedTarget.getFort(levelSelector.value+levelDiff.value))
+            reflex = " Reflex:"+str(Selector.selectedTarget.getRef(levelSelector.value+levelDiff.value))
+            will = " Will:"+str(Selector.selectedTarget.getWill(levelSelector.value+levelDiff.value))
+            perception = " Perception:"+str(Selector.selectedTarget.getPer(levelSelector.value+levelDiff.value))
+            
+            xaxisText="vs" + ac + fort + reflex + will + perception
+                
 #            xaxis2Text="vs Save"
     else:
         xLists, yLists, pyLists, hitsLists, critsLists, debuffLists, nameList = createTraces(levelDiff.value, 
@@ -1396,6 +1487,7 @@ targetFortSelector.observe(targetFortChangedResponse, names="value")
 targetRefSelector.observe(targetRefChangedResponse, names="value")
 targetWillSelector.observe(targetWillChangedResponse, names="value")
 targetPerSelector.observe(targetPerChangedResponse, names="value")
+customTarget.observe(customTargetResponse,names="value")
 clumsy.observe(targetClumsyChangedResponse, names="value")
 drained.observe(targetDrainedChangedResponse, names="value")
 enfeebled.observe(targetEnfeebledChangedResponse, names="value")
@@ -1408,6 +1500,7 @@ classSelector.observe(classSelectorResponse, names="value")
 
 
 targetRow = widgets.HBox([levelDiff, targetACSelector, targetFortSelector, targetRefSelector,targetWillSelector, targetPerSelector])
+customRow = widgets.HBox([customTarget,customAC,customFort,customRef,customWill,customPer])
 debuffs = widgets.HBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
 adjustments = widgets.HBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox,persistentDamageReroll]) #weakness, applyDebuffs
 levelViewRow = widgets.HBox([percentageView,byLevelView,levelSelector,levelViewSelector])
@@ -1424,12 +1517,14 @@ selectorRow = widgets.HBox([selectorBox,selectorModifiers,weaponModifiers,featur
 selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,combineSelectionButton,minButton,maxButton,sumButton,difButton,newNameBox],
                                  layout=widgets.Layout(height='105%'))
 selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='105%'))
-
+printButtonRow = widgets.HBox([printButton,printSelectionButton])
 ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
+                                            customRow,
                                             debuffs,
                                             adjustments,
               levelViewRow,
               g,
              selectorRow,
              selectionsBox,
-             printButton])
+             printButtonRow,
+             printBox])

@@ -19,18 +19,37 @@ class Target:
         self.sickened = 0
         self.stupified = 0
         
+        self.customTarget = False
+        self.customAC = 10
+        self.customFort = 0
+        self.customRef = 0
+        self.customWill = 0
+        self.customPer = 0
+        
     def getAC(self, level):
+        if self.customTarget:
+            return self.customAC
         if level in self.ac.keys():
             return self.ac[level]
     def getSaves(self, level):
+        if self.customTarget:
+            return self.customRef
         return self.ref[level]
     def getFort(self, level):
+        if self.customTarget:
+            return self.customFort
         return self.fort[level]
     def getRef(self, level):
+        if self.customTarget:
+            return self.customRef
         return self.ref[level]
     def getWill(self, level):
+        if self.customTarget:
+            return self.customWill
         return self.will[level]
     def getPer(self, level):
+        if self.customTarget:
+            return self.customPer
         return self.per[level]   
     
     def setAC(self, ac):
@@ -39,6 +58,7 @@ class Target:
         self.fort = saves
         self.ref = saves
         self.will = saves
+        self.per = saves
     def setFort(self, saves):
         self.fort = saves
     def setRef(self, saves):
@@ -47,6 +67,15 @@ class Target:
         self.will = saves
     def setPer(self, saves):
         self.per = saves
+    def setCustom(self, ac, fort, ref, will, per):
+        self.customTarget = True
+        self.customAC = ac
+        self.customFort = fort
+        self.customRef = ref
+        self.customWill = will
+        self.customPer = per
+    def revertCustom(self):
+        self.customTarget = False
         
     def contains(self, level):
         return level in self.ac and level in self.fort and level in self.ref and level in self.will
@@ -155,7 +184,6 @@ def calculateED(accuracy, defense, damageBonus, damageDice, dm=0, cd=0, fd=0, sd
 
             
 class Selector:
-    
     selectedTarget = averageTarget # use averageTarget later
     selectedTarget.setSaves(creatureData['Saves']['Moderate'])
     selectedTarget.setPer(creatureData['Perception']['Moderate'])
@@ -191,7 +219,10 @@ class Selector:
         Selector.selectedTarget.sickened = int(name)
     def changeTargetStupified(name):
         Selector.selectedTarget.stupified = int(name)
-     
+    def customTarget(ac,fort,ref,will,per):
+        Selector.selectedTarget.setCustom(ac,fort,ref,will,per)
+    def revertCustom():
+        Selector.selectedTarget.revertCustom()
     def shouldAddPrimary(key):
         attack = attackSwitcher[key][0]
         return attack.prim
@@ -218,6 +249,7 @@ class Selector:
                      minLevel, maxLevel):
         attack = attackSwitcher[value][0]
         newAttack = copy.deepcopy(attack)
+        newAttack.name = key
         
         newAttack.setPrimaryAS(primaryAS)
         newAttack.setSecondaryAS(secondaryAS)
@@ -235,6 +267,8 @@ class Selector:
         
         newAttack.setSpellLevel(spellLevelMod)
         newAttack.setLevels(minLevel, maxLevel)
+        
+        
         
         Selector.selections[key] = [newAttack]
         Selector.keyList.append(key)
@@ -317,6 +351,13 @@ class Selector:
             if type(attack) is CombinedAttack:
                 return False
         return True
+    
+    def getSelectionInfo(key):
+        info = ""
+        attackList = Selector.selections.get(key)
+        for attack in attackList:
+            info += attack.info() + "\n"
+        return info
 
 class Context:
     def __init__(self, oldContext, chance, result):
@@ -470,6 +511,9 @@ class Context:
         self.onSecondHitDamageDice = []
         self.onThirdHitDamageDice = []
         self.onEveryHitDamageDice = []
+        
+        self.didHit = False
+        self.usedDamage = False
         return
     def initialize(self, oldContext):
         self.targetLevel = oldContext.targetLevel
@@ -505,7 +549,17 @@ class Context:
         self.onSecondHitDamageDice = oldContext.onSecondHitDamageDice
         self.onThirdHitDamageDice = oldContext.onThirdHitDamageDice
         self.onEveryHitDamageDice = oldContext.onEveryHitDamageDice
-            
+        
+        if oldContext.didHit:
+            self.onFirstHitDamageDice = self.onSecondHitDamageDice
+            self.onSecondHitDamageDice = self.onThirdHitDamageDice
+            self.onThirdHitDamageDice = []
+        self.didHit = False
+        
+        if oldContext.usedDamage:
+            self.thisDamageBonus = 0
+        self.usedDamage = False
+        
     def setFlatfooted(self):
         self.origffstatus = True
         self.flatfooted = True
@@ -554,7 +608,7 @@ class Context:
     
     def getExtraDamage(self):
         db = self.thisDamageBonus
-        self.thisDamageBonus = 0
+        self.usedDamage = True 
         return db
     
     def getWeakness(self):
@@ -562,9 +616,7 @@ class Context:
     
     def getHitDamageDice(self):
         dice = self.onFirstHitDamageDice + self.onEveryHitDamageDice
-        self.onFirstHitDamageDice = self.onSecondHitDamageDice
-        self.onSecondHitDamageDice = self.onThirdHitDamageDice
-        self.onThirdHitDamageDice = []
+        self.didHit = True
         return dice
     
     def hasTrueStrike(self):
@@ -708,7 +760,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 newContextList.append(ignoreContext)
             else:
                 critSuccessResult = atk.critSuccessResult(level, context)
-                csContext = Context(context, critSuccessPercent/100, critSuccessResult)
+                csContext = Context(copy.copy(context), critSuccessPercent/100, critSuccessResult)
                 newContextList.append(csContext)
             
                 
@@ -892,21 +944,21 @@ def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness
 
 def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness, level):
     xLists = []
-    xLists2 = []
+#    xLists2 = []
     yLists = []
     pyLists = []
     hitsLists = []
     critsLists = []
     debuffLists = []
     target = Selector.selectedTarget
-    
+ 
     if not target.contains(level+levelDiff):
         return xLists, yLists, pyLists, hitsLists, critsLists, Selector.keyList
     
     for k in Selector.keyList: #for each attack routine selection
         s = Selector.selections[k]
         xList = []
-        xList2 = []
+#        xList2 = []
         yList = []
         pyList = []
         hitsList = []
@@ -927,8 +979,8 @@ def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, wea
             for i in range(-8,9):
                 ac = target.getAC(level+levelDiff)-i
                 save = target.getSaves(level+levelDiff)-i
-                xList.append(ac)
-                xList2.append(save)
+                xList.append(-i)
+#                xList2.append(save)
                 y, py, hits, crits, debuffs = graphTrace(s, target, level, levelDiff, attackBonus+i, damageBonus, weakness, flatfootedStatus)
                 yList.append(y)
                 pyList.append(py)
@@ -936,14 +988,14 @@ def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, wea
                 critsList.append(crits)
                 debuffList.append(debuffs)
         xLists.append(xList)
-        xLists2.append(xList2)
+#        xLists2.append(xList2)
         yLists.append(yList)
         pyLists.append(pyList)
         hitsLists.append(hitsList)
         critsLists.append(critsList)
         debuffLists.append(debuffList)
     
-    return xLists, xLists2, yLists, pyLists, hitsLists, critsLists, debuffLists, Selector.keyList
+    return xLists, yLists, pyLists, hitsLists, critsLists, debuffLists, Selector.keyList
         
 def createDamageDistribution(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness, level, displayPersistent):
     xLists = []

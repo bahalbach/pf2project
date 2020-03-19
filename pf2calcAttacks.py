@@ -1179,7 +1179,8 @@ class Result:
 class AtkSelection:
 #         4 types: 'Strike', 'SaveAttack', 'Save', 'Effect'
         def __init__(self, attack, damage):
-            
+            self.name = "Attack"
+            self.details = ""
             self.attack = attack
             self.attackBonus = 0
             self.damage = damage
@@ -1327,6 +1328,7 @@ class AtkSelection:
                         self.critDamage[i] += self.wDice[i] * 2
                         
         def setWeaponFeatures(self, featureArray):
+            self.details= "features: "
             for feature in featureArray:
                 if feature[0] == "1d12 Rune":
                     if not self.isWeapon:
@@ -1334,74 +1336,228 @@ class AtkSelection:
                     for i in self.runeDamageDice:
                         if i >= feature[1]:
                             self.runeDamageDice[i]+=[d12]
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 if feature[0] == "1d10 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
                         if i >= feature[1]:
                             self.runeDamageDice[i]+=[d10]
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 if feature[0] == "1d8 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
                         if i >= feature[1]:
                             self.runeDamageDice[i]+=[d8]
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 if feature[0] == "1d6 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
                         if i >= feature[1]:
                             self.runeDamageDice[i]+=[d6]
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "1d4 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
                         if i >= feature[1]:
                             self.runeDamageDice[i]+=[d4]
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "backswing":
+                    self.setBackswing(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "keen":
+                    self.setKeen(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+1 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] += 1
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+2 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] += 2
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+3 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] += 3
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+4 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] += 4
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+5 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] += 5
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "-1 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] -= 1
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "-2 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] -= 2
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "-3 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] -= 3
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "-4 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] -= 4
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "-5 attack":
                     for i in self.attack:
                         if i >= feature[1]:
                             self.attack[i] -= 5
-                elif feature[0] == "backswing":
-                    self.setBackswing(feature[1])
-                elif feature[0] == "keen":
-                    self.setKeen(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+1 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 1
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+2 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 2
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+3 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 3
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+4 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 4
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+5 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 5
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+6 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 6
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+7 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 7
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+8 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 8
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+9 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 9
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+10 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] += 10
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-1 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 1
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-2 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 2
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-3 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 3
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-4 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 4
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-5 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 5
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-6 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 6
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-7 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 7
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-8 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 8
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-9 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 9
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-10 damage":
+                    for i in self.damage:
+                        if i >= feature[1]:
+                            self.damage[i] -= 10
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 else:
                     print("feature is ", feature[0])
             return
@@ -1641,6 +1797,9 @@ class AtkSelection:
                 else:
                     level = level + self.spellLevelModifier*2
             return level
+        
+        def info(self):
+            return self.name + ": " + self.details
 
 class Strike(AtkSelection):
     def __init__(self, attack, damage, isWeapon=True, csLevel=21):
