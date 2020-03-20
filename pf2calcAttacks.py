@@ -2536,8 +2536,8 @@ class AttackSave(AtkSelection):
     
     
 class Effect(AtkSelection):
-    def __init__(self, damage):
-        super().__init__(casterAttackBonus, damage)
+    def __init__(self):
+        super().__init__(casterAttackBonus, noneDamage)
         self.flatfootNextStrike = False
         self.flatfoot = False
         self.trueStrike = False
@@ -2564,20 +2564,8 @@ class Effect(AtkSelection):
         return False
         
     def effectResult(self, level, context):
-        staticDamage = self.getDamageBonus(level)
-        bonus = self.damageBonus
-#        bnous += context.getDamageBonus() no enfeebled
-        bonus += context.getExtraDamage()
-        damageDice = self.getDamageDice(level)
         
-        damageDist = Distribution(damageDice,staticDamage)
-        damageDist.addBonus(bonus)
-        
-        # weakness
-        weakness = context.getWeakness()
-        damageDist.addWeakness(weakness)
-        
-        r = Result(self,damageDist,Distribution())
+        r = Result(self,Distribution(),Distribution())
         
         if self.flatfoot:
             r.futureAttacksFF = True
@@ -2621,10 +2609,31 @@ class Effect(AtkSelection):
         r.stupified = self.goodStupified
             
         return r
-
+class AutoDamage(Effect):
+    def __init__(self, damage):
+        super().__init__()
+        self.damage = damage
+        
+    def effectResult(self, level, context):
+        staticDamage = self.getDamageBonus(level)
+        bonus = self.damageBonus
+#        bnous += context.getDamageBonus() no enfeebled
+        bonus += context.getExtraDamage()
+        damageDice = self.getDamageDice(level)
+        
+        damageDist = Distribution(damageDice,staticDamage)
+        damageDist.addBonus(bonus)
+        
+        # weakness
+        weakness = context.getWeakness()
+        damageDist.addWeakness(weakness)
+        
+        r = Result(self,damageDist,Distribution())
+        return r
+    
 class Quicksilver(Effect):
     def __init__(self, attack):
-        super().__init__(noneDamage)
+        super().__init__()
         self.attack = attack
         self.prim = True
         self.sec = False
@@ -2981,15 +2990,15 @@ warpriestsmite.runeDamageDice = warpriestSmiteDamageDice
 roguestrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
 roguestrike.flatfootedDamageDice = sneakattackdamage
 
-rangerprecedge = Effect(noneDamage)
+rangerprecedge = Effect()
 rangerprecedge.addfirsthitdamageDice = rangerprecedgedamage1
 rangerprecedge.addsecondhitdamageDice = rangerprecedgedamage2
 rangerprecedge.addthirdhitdamageDice = rangerprecedgedamage3
 
-rangerbearsupport = Effect(noneDamage)
+rangerbearsupport = Effect()
 rangerbearsupport.addeveryhitdamageDice = rangerbearsupportdamage
 
-bespellweapon = Effect(noneDamage)
+bespellweapon = Effect()
 bespellweapon.addeveryhitdamageDice = {i: [d6] for i in range(1,21)}
 
 druidanimalform = TransformStrike(wildshapeAttackBonus, animalFormDamage)
@@ -3263,21 +3272,21 @@ monsterAttackSwitcher = {'Monster Extreme Attack High Damage': [monsterEH],
                   }
 
 #effects
-flatfoot = Effect(noneDamage)
+flatfoot = Effect()
 flatfoot.flatfoot = True
 
-flatfootnext = Effect(noneDamage)
+flatfootnext = Effect()
 flatfootnext.flatfootNextStrike = True
 
 effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
                         'Flat Foot Next Strike': [flatfootnext]}
 
 
-magicmissle = Effect(magicMissleDamage)
+magicmissle = AutoDamage(magicMissleDamage)
 magicmissle.weaponDamageDice = magicMissleDamageDice
 magicmissle.isSpell = True
 
-truestrike = Effect(noneDamage)
+truestrike = Effect()
 truestrike.trueStrike = True
 
 basic45 = Save(spellDC, noneDamage)
@@ -3435,7 +3444,7 @@ grimtendrils.persDamage = spellDamage1
 grimtendrils.targetSave = Fort
 grimtendrils.persDamageType = Bleed
 
-wallfire = Effect(noneDamage)
+wallfire = Effect()
 wallfire.isSpell = True
 wallfire.minSpellLevel = 4
 wallfire.weaponDamageDice = spellDamaged6
@@ -3474,13 +3483,13 @@ visionsdanger.minSpellLevel = 7
 visionsdanger.weaponDamageDice = {i: [d8] + spellDamaged8[i] for i in range(13,21)}
 visionsdanger.targetSave = Will
 
-heal = Effect(noneDamage)
+heal = AutoDamage(noneDamage)
 heal.weaponDamageDice = spellDamaged8
-heal2 = Effect(spellDamage8)
+heal2 = AutoDamage(spellDamage8)
 heal2.weaponDamageDice = spellDamaged8
-heal10 = Effect(noneDamage)
+heal10 = AutoDamage(noneDamage)
 heal10.weaponDamageDice = spellDamaged10
-heal210 = Effect(spellDamage8)
+heal210 = AutoDamage(spellDamage8)
 heal210.weaponDamageDice = spellDamaged10
 
 harm = Save(spellDC, noneDamage)
@@ -3496,7 +3505,7 @@ warpriestHarm10 = Save(warpriestDC, noneDamage)
 warpriestHarm10.weaponDamageDice = spellDamaged10
 warpriestHarm10.targetSave = Fort
 
-dangeroussorcerery = Effect(noneDamage)
+dangeroussorcerery = Effect()
 dangeroussorcerery.isSpell = True
 dangeroussorcerery.addDamage = spellDamage1
 
@@ -3602,7 +3611,7 @@ divineWrath.goodSickened = 1
 divineWrath.veryGoodSickened = 2
 
 heroismBonus = {i: int(sDice[i]/3) for i in range(1,21)}
-heroism = Effect(noneDamage)
+heroism = Effect()
 heroism.isSpell = True
 heroism.addAttack = heroismBonus
 
