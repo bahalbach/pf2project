@@ -13,12 +13,18 @@ d8 = [1/8] * 8
 d10 = [1/10] * 10
 d12 = [1/12] * 12
 
+#diename={4: "d4",
+#         6: "d6",
+#         8: }
+
 class Distribution:
     ConvolutionDict = {}
-    
+    ConvolutionDiceDict = {}
+    count = 0
     def __init__(self,dice=[],static=0,damageType=None):
         self.dist = [1]
         self.minimum = 0
+#        self.name = ""
         self.add(dice,static)
         self.type = damageType
         
@@ -57,6 +63,7 @@ class Distribution:
         
         self.dist = d2
         self.minimum = minimumRoll
+#        self.name+=".5"
         return self
         
     def double(self):
@@ -77,14 +84,18 @@ class Distribution:
             newDist += [chance] + [0]*(multiplier-1)
         self.dist = newDist
         self.minimum = self.minimum*multiplier
+#        self.name+=str(multiplier)
         return self
             
     def add(self, dice, static):
         
         dist = self.dist
-        #dist = Distribution.Convolve(dist,dice)
-        for die in dice:
-            dist = numpy.convolve(dist,die)
+        dist = Distribution.ConvolveDice(dist,dice)
+#        
+#        for die in dice:
+#            dist = numpy.convolve(dist,die)
+##            dist = Distribution.Convolve(dist,die)
+#            self.name+="d"+str(len(die))
         self.dist = dist
         self.minimum += len(dice)
         self.minimum += static
@@ -117,7 +128,7 @@ class Distribution:
             self.minimum += static
             
     def combine(self,d2):
-        self.dist = numpy.convolve(self.dist, d2.dist)
+        self.dist = Distribution.Convolve(self.dist, d2.dist)
         self.minimum = self.minimum + d2.minimum
         return self
     
@@ -160,18 +171,45 @@ class Distribution:
             
     def Combine(d1, d2):
         newDist = Distribution([],0)
-        newDist.dist = numpy.convolve(d1.dist,d2.dist)
+        newDist.dist = Distribution.Convolve(d1.dist,d2.dist)
         newDist.minimum = d1.minimum + d2.minimum
         return newDist
     
     def Convolve(a1, a2):
         # unhashable type: 'list'
-        if (a1,a2) in Distribution.ConvolutionDict:
-            return Distribution.ConvolutionDict[(a1,a2)]
+        return numpy.convolve(a1, a2)
+        key = (*a1,*a2)
+        if key in Distribution.ConvolutionDict:
+            Distribution.count += 1
+#            print("found")
+            return Distribution.ConvolutionDict[key]
         else:
             c = numpy.convolve(a1, a2)
-            Distribution.ConvolutionDict[(a1,a2)] = c
+            Distribution.ConvolutionDict[key] = c
             return c
+        
+    def ConvolveDice(dist, dice):
+        for die in dice:
+            dist = numpy.convolve(dist,die)
+        return dist
+#        return numpy.convolve(a1, a2)
+        if dist != [1]:
+            for die in dice:
+                dist = numpy.convolve(dist,die)
+            return dist
+#        key = (*dist,)
+        key = tuple()
+        for die in dice:
+            key += (len(die),)
+        if key in Distribution.ConvolutionDiceDict:
+            Distribution.count += 1
+#            print("found")
+            return Distribution.ConvolutionDiceDict[key]
+        else:
+            for die in dice:
+                dist = numpy.convolve(dist,die)
+            Distribution.ConvolutionDiceDict[key] = dist
+            return dist
         
     def ShiftDown(dist, num):
         newDist = [0]

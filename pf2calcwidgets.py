@@ -1,5 +1,6 @@
 import copy
 from pf2calc import Selector, CombinedAttack, createTraces, createLevelTraces, createDamageDistribution, createDebuffDistribution, creatureData
+from distribution import Distribution
 import plotly.graph_objects as go
 from ipywidgets import widgets
 
@@ -367,12 +368,14 @@ abilityScoreOptionName = {'10 No Boost':"10",
 primaryAbilityScore = widgets.Dropdown(
         description = 'Attack Ability Score',
         options=abilityScoreOptions,
-        value='18 to 22 Apex'
+        value='18 to 22 Apex',
+        layout=widgets.Layout(width='auto')
 )
 secondaryAbilityScore = widgets.Dropdown(
         description = 'Damage Ability Score',
         options=abilityScoreOptions,
-        value='18 to 22 Apex'
+        value='18 to 22 Apex',
+        layout=widgets.Layout(width='auto')
 )
 
 mapOptions=['x0 = 0',
@@ -390,7 +393,16 @@ mapOptions=['x0 = 0',
 mapSelection = widgets.Dropdown(
         description = 'MAP',
         options=mapOptions,
-        value='x0 = 0')
+        value='x0 = 0',
+        layout=widgets.Layout(width='auto'))
+weaponTraits = widgets.SelectMultiple(
+    options=['forceful',
+             'backswing'],
+    # rows=10,
+#    description='Current selections:',
+    layout=widgets.Layout(width='100%', height='90%'),
+    disabled=False
+)
 
 attackModifier = widgets.BoundedIntText(
     value=0.0,
@@ -449,10 +461,13 @@ spellLevelSelector = widgets.Dropdown(
                  '8',
                  '9',
                  '10'],
-        value='Max')
+        value='Max',
+        layout=widgets.Layout(width='auto')
+)
 
 weaponLabel = widgets.Label(
-        value="Weapon:"
+        value="Weapon:",
+        layout=widgets.Layout(height='auto')
 )
 
 weaponDamageDie = widgets.Dropdown(
@@ -951,7 +966,7 @@ selections = widgets.SelectMultiple(
     options=[],
     # rows=10,
     description='Current selections:',
-    layout=widgets.Layout(width='80%', height='100%'),
+    layout=widgets.Layout(width='80%', height='90%'),
     disabled=False
 )
 
@@ -1205,10 +1220,14 @@ difButton.on_click(on_difButton_clicked)
 
 newNameBox = widgets.Text(value="",layout=widgets.Layout(width='auto'))
 printBox = widgets.Textarea(value="",
-                            placeholder="print data")
+                            placeholder="print data",
+                            layout=widgets.Layout(width='auto',height='auto')
+)
 data = []
 printButton = widgets.Button(description="Print Data")
 def on_printButton_clicked(b):
+#    printBox.value = str(Distribution.count)
+#    Distribution.count = 0
     printBox.value = str(data)
 printButton.on_click(on_printButton_clicked)
 
@@ -1241,6 +1260,13 @@ def updateEDBLGraph():
     CombinedAttack.PersistentReRoll = persistentDamageReroll.value
     if customTarget.value:
         targetText = " Target w/ AC:" + str(customAC.value) + " F:" + str(customFort.value) + " R:" + str(customRef.value)  + " W:" + str(customWill.value) + " P:" + str(customPer.value)
+    elif byLevelView.value:
+        ac = " AC:"+str(Selector.selectedTarget.getAC(levelSelector.value+levelDiff.value))
+        fort = " Fort:"+str(Selector.selectedTarget.getFort(levelSelector.value+levelDiff.value))
+        reflex = " Reflex:"+str(Selector.selectedTarget.getRef(levelSelector.value+levelDiff.value))
+        will = " Will:"+str(Selector.selectedTarget.getWill(levelSelector.value+levelDiff.value))
+        perception = " Perception:"+str(Selector.selectedTarget.getPer(levelSelector.value+levelDiff.value))
+        targetText =" Target w/" + ac + fort + reflex + will + perception
     else:
         targetText = " Target w/ AC:" + str(targetACSelector.value) + " F:" + str(targetFortSelector.value) + " R:" + str(targetRefSelector.value)  + " W:" + str(targetWillSelector.value) + " P:" + str(targetPerSelector.value)
     if byLevelView.value and (levelViewSelector.value == 'Damage Distribution' or levelViewSelector.value == 'Cumulative Distribution'):
@@ -1311,13 +1337,7 @@ def updateEDBLGraph():
                                             weakness.value,
                                             levelSelector.value)
             titleText="For lvl" + str(levelSelector.value) + " vs lvl" + str(levelSelector.value+levelDiff.value) + targetText
-            ac = " AC:"+str(Selector.selectedTarget.getAC(levelSelector.value+levelDiff.value))
-            fort = " Fort:"+str(Selector.selectedTarget.getFort(levelSelector.value+levelDiff.value))
-            reflex = " Reflex:"+str(Selector.selectedTarget.getRef(levelSelector.value+levelDiff.value))
-            will = " Will:"+str(Selector.selectedTarget.getWill(levelSelector.value+levelDiff.value))
-            perception = " Perception:"+str(Selector.selectedTarget.getPer(levelSelector.value+levelDiff.value))
-            
-            xaxisText="vs" + ac + fort + reflex + will + perception
+            xaxisText="+/- X AC/Fort/Reflex/Will/Perception"
                 
 #            xaxis2Text="vs Save"
     else:
@@ -1507,7 +1527,7 @@ levelViewRow = widgets.HBox([percentageView,byLevelView,levelSelector,levelViewS
 
     # no ,mapSelection
 selectorModifiers = widgets.VBox([primaryAbilityScore,secondaryAbilityScore,attackModifier,damageModifier,additionalDamage,levelLimiter,spellLevelSelector,selectorAddButton])
-weaponModifiers = widgets.VBox([weaponLabel,weaponDamageDie,weaponCritical,criticalSpecialization])
+weaponModifiers = widgets.VBox([weaponLabel,weaponDamageDie,weaponCritical,criticalSpecialization]) # mapSelection, weaponTraits  
 featureModifiers = widgets.VBox([featureSelection1,featureSelection2,featureSelection3,featureSelection4,featureSelection5,featureSelection6,featureSelection7,featureSelection8])
 featureLevels = widgets.VBox([featureLevel1,featureLevel2,featureLevel3,featureLevel4,featureLevel5,featureLevel6,featureLevel7,featureLevel8])
 #runeModifiers = widgets.VBox([elementalRunesLabel,elementalRune1,elementalRune2,elementalRune3,elementalRune4])
@@ -1515,8 +1535,8 @@ selectorBox = widgets.VBox([classSelector,selector])
 selectorRow = widgets.HBox([selectorBox,selectorModifiers,weaponModifiers,featureModifiers,featureLevels])
 
 selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,combineSelectionButton,minButton,maxButton,sumButton,difButton,newNameBox],
-                                 layout=widgets.Layout(height='105%'))
-selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='105%'))
+                                 layout=widgets.Layout(height='80%'))
+selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='300px'))
 printButtonRow = widgets.HBox([printButton,printSelectionButton])
 ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
                                             customRow,
