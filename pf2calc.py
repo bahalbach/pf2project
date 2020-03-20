@@ -382,6 +382,19 @@ class Context:
                 if result.trueStrike:
                     self.trueStrike = True 
                
+                if result.addConcealment:
+                    if self.concealment <= 20:
+                        self.concealment = 20
+                if result.addHidden:
+                    if self.concealment <= 50:
+                        self.concealment = 50
+                if result.removeConcealment:
+                    if self.concealment >= 0:
+                        self.concealment = 0
+                if result.removeHidden:
+                    if self.concealment >= 20:
+                        self.concealment = 20
+                        
                 if result.treatWorse:
                     self.treatWorse = True
                     
@@ -484,6 +497,8 @@ class Context:
         
         self.attackBonus = 0
         
+        self.concealment = 0
+        
         self.clumsy = 0
         self.drained = 0
         self.enfeebled = 0
@@ -526,6 +541,8 @@ class Context:
         
         self.attackBonus = oldContext.attackBonus
             
+        self.concealment = oldContext.concealment
+        
         self.debuffAttack = oldContext.debuffAttack
         self.clumsy = oldContext.clumsy
         self.drained = oldContext.drained
@@ -669,6 +686,9 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 
             keenStatus = False
             trueStrike = False
+            concealment = context.concealment
+            if concealment<=20 and atk.ignoreConcealment:
+                concealment = 0
             if(isinstance(atk, Strike)):
                 if context.setAttack is None:
                     totalBonus = atk.getAttack(level)
@@ -725,8 +745,10 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
 #                
             elif(isinstance(atk, Effect)):
                 r = atk.effectResult(level, context)
-                eContext = Context(context, 1, r)
+                eContext = Context(context, (100-concealment)/100, r)
                 newContextList.append(eContext)
+                neContext = Context(context, concealment/100, None)
+                newContextList.append(neContext) 
                 continue
             else:
                 # this should not happen
@@ -742,12 +764,18 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 notfail = nothit - failureChance(totalBonus-totalDC)
                 failurePercent = 100 - (notfail * notfail / 100) - successPercent - critSuccessPercent
                 critFailurePercent = critFailureChance(totalBonus-totalDC) * critFailureChance(totalBonus-totalDC) / 100
-                
+                noEffectPercent = 0
             else:
                 critSuccessPercent = critSuccessChance(totalBonus-totalDC, keen=keenStatus)
                 successPercent = successChance(totalBonus-totalDC, keen=keenStatus)
                 failurePercent = failureChance(totalBonus-totalDC)
                 critFailurePercent = critFailureChance(totalBonus-totalDC)
+                
+                critSuccessPercent = critSuccessPercent * (100-concealment)/100
+                successPercent = successPercent * (100-concealment)/100
+                failurePercent = failurePercent * (100-concealment)/100
+                critFailurePercent = critFailurePercent * (100-concealment)/100
+                noEffectPercent = concealment
                 
             if context.treatWorse:
                 critFailurePercent = critFailurePercent + failurePercent
@@ -776,7 +804,13 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
             
                 critFailureResult = atk.critFailureResult(level, context)
                 cfContext = Context(context, critFailurePercent/100, critFailureResult)
-                newContextList.append(cfContext)      
+                newContextList.append(cfContext) 
+                
+                neContext = Context(context, noEffectPercent/100, None)
+                if atk.backswingLevel <= level:
+                    neContext.thisStrikeBonus += 1
+                newContextList.append(neContext) 
+                
             
         # replace contextList with the list of newly created contexts
         contextList = newContextList
@@ -977,8 +1011,8 @@ def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, wea
         
         if toAdd:
             for i in range(-8,9):
-                ac = target.getAC(level+levelDiff)-i
-                save = target.getSaves(level+levelDiff)-i
+#                ac = target.getAC(level+levelDiff)-i
+#                save = target.getSaves(level+levelDiff)-i
                 xList.append(-i)
 #                xList2.append(save)
                 y, py, hits, crits, debuffs = graphTrace(s, target, level, levelDiff, attackBonus+i, damageBonus, weakness, flatfootedStatus)

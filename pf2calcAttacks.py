@@ -375,6 +375,13 @@ for i in sProf:
         sProf[i] += 2
     if i >= 19:
         sProf[i] +=2
+    
+barbProf = {i: i+2 for i in range(1,21)}
+for i in barbProf:
+    if i >= 11:
+        barbProf[i] += 2
+    if i >= 19:
+        barbProf[i] += 2
         
 acProf = {i: i+2 for i in range(1,21)}
 for i in acProf:
@@ -484,6 +491,9 @@ fighterAttackBonus = {i: fProf[i]  + wiBonus[i] for i in range(1,21)}
 cantripAttackBonus = {i: sProf[i]  for i in range(1,21)}
 spellDC = {i: 10 + cantripAttackBonus[i] for i in range(1,21)}
 warpriestDC = {i: 10 + wsProf[i] for i in range(1,21)}
+
+barbarianDC = {i: 10 + barbProf[i] for i in range(1,21)}
+spiritswrathattackBonus = {i: mProf[i] + 2 for i in range(1,21)}
 
 trainedSkillBonus = {i: i+2 for i in range(1,21)}
 maxSkillBonus = {i: skillProf[i] + siBonus[i] for i in range(1,21)}
@@ -1087,6 +1097,11 @@ class Result:
         self.trueStrike = False
         self.nextStrikeBonus = 0
         
+        self.addConcealment = False
+        self.removeConcealment = False
+        self.addHidden = False
+        self.removeHidden = False
+        
         self.addfirsthitdamage = 0
         self.addsecondhitdamage = 0 
         self.addthirdhitdamage = 0 
@@ -1229,6 +1244,8 @@ class AtkSelection:
             self.doublePersDamage = True
             self.halveDamage = True
             self.damageOnSuccesSave = True
+            
+            self.ignoreConcealment = False
             
             self.critSpecLevel = 21
             self.keenLevel = 21
@@ -1376,6 +1393,10 @@ class AtkSelection:
                         self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "keen":
                     self.setKeen(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "Brutal Critical":
+                    self.setBrutalCritical(feature[1])
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+1 attack":
@@ -1778,7 +1799,11 @@ class AtkSelection:
             self.keenLevel = min(level, self.keenLevel)
         def setBackswing(self, level):
             self.backswingLevel = min(level, self.backswingLevel)
-            
+        def setBrutalCritical(self, level):
+            for i in range(level, 21):
+                self.critDamageDice[i] += [self.damageDie]
+                self.persDamageType = Bleed
+                self.critPersDamageDice[i] += 2*[self.damageDie]
         def setFFonCrit(self, level):
             self.ffonCritLevel = min(level,self.ffonCritLevel)
         def setFFonSuccess(self, level):
@@ -2541,6 +2566,10 @@ class Effect(AtkSelection):
         self.flatfootNextStrike = False
         self.flatfoot = False
         self.trueStrike = False
+        self.addConcealment = False
+        self.removeConcealment = False
+        self.addHidden = False
+        self.removeHidden = False
         
         self.addfirsthitdamage = None
         self.addsecondhitdamage = None 
@@ -2573,6 +2602,10 @@ class Effect(AtkSelection):
             r.nextAttackFF = True
         
         r.trueStrike = self.trueStrike
+        r.addConcealment = self.addConcealment
+        r.addHidden = self.addHidden
+        r.removeConcealment = self.removeConcealment
+        r.removeHidden = self.removeHidden
         
         if self.addfirsthitdamage:
             r.addfirsthitdamage = self.addfirsthitdamage[level]
@@ -2964,12 +2997,46 @@ barbariangiantstrike = MeleeStrike(martialAttackBonus, barbariangiantdamage, csL
 
 barbarianspiritstrike = MeleeStrike(martialAttackBonus, barbarianspiritdamage, csLevel=5)
 
+dragonragebreath = Save(barbarianDC, noneDamage)
+dragonragebreath.isSpell = False
+dragonragebreath.weaponDamageDice = {i: i*[d6] for i in range(1,21)}
+dragonragebreath.minL = 6
+dragonragebreath2 = Save(barbarianDC, noneDamage)
+dragonragebreath2.isSpell = False
+dragonragebreath2.weaponDamageDice = {i: int(i/2)*[d6] for i in range(1,21)}
+dragonragebreath2.minL = 6
+
+barbAnimalThrash = CantripSave(barbarianDC, barbariananimaldamage)
+barbAnimalThrash.targetSave = Fort
+barbDragonThrash = CantripSave(barbarianDC, barbariandragondamage)
+barbDragonThrash.targetSave = Fort
+barbFuryThrash = CantripSave(barbarianDC, barbarianfurydamage)
+barbFuryThrash.targetSave = Fort
+barbGiantThrash = CantripSave(barbarianDC, barbariangiantdamage)
+barbGiantThrash.targetSave = Fort
+barbSpiritThrash = CantripSave(barbarianDC, barbarianspiritdamage)
+barbSpiritThrash.targetSave = Fort
+
+spiritsWrath = MeleeStrike(spiritswrathattackBonus,noneDamage)
+spiritsWrath.veryGoodFrightened = 1
+spiritsWrath.isWeapon = False
+spiritsWrath.minL = 12
+spiritsWrath.weaponDamageDice = {i: 4*[d8] for i in range(1,21)}
+
 barbarianAttackSwitcher = {'Barbarian Animal Claw': [barbariananimalclaws],
                     'Barbarian Animal Jaw': [barbariananimaljaws],
                     'Barbarian Dragon Strike': [barbariandragonstrike],
                     'Barbarian Fury Strike': [barbarianfurystrike],
                     'Barbarian Giant Strike': [barbariangiantstrike],
-                    'Barbarian Spirit Strike': [barbarianspiritstrike]}
+                    'Barbarian Spirit Strike': [barbarianspiritstrike],
+                    'Barbarian Dragon Breath': [dragonragebreath],
+                    'Barbarian Dragon Breath2': [dragonragebreath2],
+                    'Barbarian Animal Thrash': [barbAnimalThrash],
+                    'Barbarian Dragon Thrash': [barbDragonThrash],
+                    'Barbarian Fury Thrash': [barbFuryThrash],
+                    'Barbarian Giant Thrash': [barbGiantThrash],
+                    'Barbarian Spirit Thrash': [barbSpiritThrash],
+                    "Barbarian Spirit's Wrath": [spiritsWrath]}
 
 
 casterstrike = MeleeStrike(casterAttackBonus, strCasterDamage, csLevel=11)
@@ -3278,8 +3345,20 @@ flatfoot.flatfoot = True
 flatfootnext = Effect()
 flatfootnext.flatfootNextStrike = True
 
+blur = Effect()
+blur.addConcealment = True
+
+invisibility = Effect()
+invisibility.addHidden = True
+
+removeConcealment = Effect()
+removeConcealment.removeConcealment = True
+
 effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
-                        'Flat Foot Next Strike': [flatfootnext]}
+                        'Flat Foot Next Strike': [flatfootnext],
+                        'Blur': [blur],
+                        'Invisibility':[invisibility],
+                        'Remove Concealment': [removeConcealment]}
 
 
 magicmissle = AutoDamage(magicMissleDamage)

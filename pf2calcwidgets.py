@@ -520,6 +520,7 @@ featureOptions = ["1d12 Rune",
                  "1d4 Rune",
                  "backswing",
                  "keen",
+                 "Brutal Critical",
                  "+1 attack",
                  "+2 attack",
                  "+3 attack",
@@ -738,7 +739,15 @@ barbarianOptions = ['Martial Strike',
                     'Barbarian Dragon Strike',
                     'Barbarian Fury Strike',
                     'Barbarian Giant Strike',
-                    'Barbarian Spirit Strike'
+                    'Barbarian Spirit Strike',
+                    'Barbarian Dragon Breath',
+                    'Barbarian Dragon Breath2',
+                    'Barbarian Animal Thrash',
+                    'Barbarian Dragon Thrash',
+                    'Barbarian Fury Thrash',
+                    'Barbarian Giant Thrash',
+                    'Barbarian Spirit Thrash',
+                    "Barbarian Spirit's Wrath"
                     ]
 bardOptions = ['Caster Strike']
 championOptions = ['Martial Strike',
@@ -836,7 +845,10 @@ monsterOptions = ['Monster Extreme Attack High Damage',
 summonOptions = ['Summon Animal',
                 'Summon Dragon']
 effectOptions = ['Flat Foot Target',
-                 'Flat Foot Next Strike']
+                 'Flat Foot Next Strike',
+                 'Blur',
+                        'Invisibility',
+                        'Remove Concealment']
 debuffSpellOptions = ['Heroism',
                       'Enfeeblement Attack',
                       'Enfeeblement Save',
@@ -1395,8 +1407,10 @@ def updateEDBLGraph():
                 yl = yLists[ii]
                 if xi in xl:
                     xii = xl.index(xi)
-                    
-                    yl[xii] = 100 * yl[xii] / firsty[i]
+                    if firsty[i] != 0:
+                        yl[xii] = 100 * yl[xii] / firsty[i]
+                    else:
+                        yl[xii] = 0
         
         # remove x,y pairs not in firstx
         for i in range(1,len(xLists)):
