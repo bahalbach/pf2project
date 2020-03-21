@@ -263,7 +263,7 @@ class DistributionsByType:
         combinationDist = Distribution()
         for dist in self.distributions.values():
             combinationDist.combine(dist)
-        return dist.generate()
+        return combinationDist.generate()
 #dice= [] 
 #static = 1
 #
