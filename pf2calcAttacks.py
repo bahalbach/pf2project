@@ -1406,11 +1406,20 @@ class AtkSelection:
                             self.runeDamageDice[i]+=[d4]
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "Add 1 Die":
+                    for i in self.weaponDamageDice:
+                        if i >= feature[1]:
+                            if len(self.weaponDamageDice[i]) > 0:
+                                self.weaponDamageDice[i]+=[self.weaponDamageDice[i][0]]
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "Remove 1 Die":
                     for i in self.weaponDamageDice:
                         if i >= feature[1]:
                             if len(self.weaponDamageDice[i]) > 0:
                                 self.weaponDamageDice[i].pop()
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "backswing":
                     self.setBackswing(feature[1])
                     if feature[1] < 21:
