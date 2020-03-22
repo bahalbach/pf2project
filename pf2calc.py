@@ -896,7 +896,7 @@ def graphChanceDamage(routine, target, level, levelDiff, attackBonus, damageBonu
         if displayPersistent:
             damageDists = persDists
         else:
-            pdWeight = int(CombinedAttack.PDWeight)
+            pdWeight = CombinedAttack.PDWeight
             persDists.multiply(pdWeight)
             damageDists.addDistributions(persDists)
         

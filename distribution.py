@@ -71,19 +71,28 @@ class Distribution:
         
     
     def multiply(self, multiplier):
-        if type(multiplier) != int:
-            raise Exception("must use an int")
+
         if multiplier < 1:
             self.dist = [1]
             self.minimum = 0
         if multiplier == 1:
             return self
-        
+
         newDist = []
-        for chance in self.dist:
-            newDist += [chance] + [0]*(multiplier-1)
+        newMinimum = int(self.minimum*multiplier)
+        oldValue = newMinimum
+        for i, chance in enumerate(self.dist):
+            newDist += [chance]
+            newValue = int((self.minimum+i+1)*multiplier)
+            newDist += [0]*max(0,newValue-oldValue-1)
+            
+            oldValue = newValue
+          
+#        newDist = []
+#        for chance in self.dist:
+#            newDist += [chance] + [0]*(multiplier-1)
         self.dist = newDist
-        self.minimum = self.minimum*multiplier
+        self.minimum = newMinimum #self.minimum*multiplier
 #        self.name+=str(multiplier)
         return self
             
