@@ -298,8 +298,9 @@ class Selector:
         newKey = key + "."
         while(newKey in Selector.keyList):
             newKey += "."
-        Selector.selections[newKey] = [attack]
+        Selector.selections[newKey] = attack
         Selector.keyList.append(newKey)
+        return newKey
         
     def removeSelection(key):
         Selector.selections.pop(key)

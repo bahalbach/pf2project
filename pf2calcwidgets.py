@@ -1166,6 +1166,14 @@ def on_stitchButton_clicked(b):
         selections.options = l
         updateEDBLGraph()
 stitchButton.on_click(on_stitchButton_clicked)
+
+duplicateButton = widgets.Button(description="Duplicate Selections")
+def on_duplicateButton_clicked(b):
+    for key in selections.value:
+        newKey = Selector.duplicate(key)
+        selections.options += (newKey,)
+    updateEDBLGraph()
+duplicateButton.on_click(on_duplicateButton_clicked)
     
 minButton = widgets.Button(description="Min/rename Selections")
 def on_minButton_clicked(b):
@@ -1595,8 +1603,8 @@ featureLevels = widgets.VBox([featureLevel1,featureLevel2,featureLevel3,featureL
 selectorBox = widgets.VBox([classSelector,selector])
 selectorRow = widgets.HBox([selectorBox,selectorModifiers,weaponModifiers,featureModifiers,featureLevels])
 
-selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,combineSelectionButton,stitchButton,minButton,maxButton,sumButton,difButton,newNameBox],
-                                 layout=widgets.Layout(height='90%'))
+selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,duplicateButton,combineSelectionButton,stitchButton,minButton,maxButton,sumButton,difButton,newNameBox],
+                                 layout=widgets.Layout(height='100%'))
 selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='300px'))
 printButtonRow = widgets.HBox([printButton,printSelectionButton])
 ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
