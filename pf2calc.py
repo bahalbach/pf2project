@@ -1,6 +1,6 @@
 import copy
 from pf2calcMonsterStats import creatureData
-from pf2calcAttacks import Strike, SaveAttack, Save, Effect, CombinedAttack, attackSwitcher, Fort, Reflex, Will, Perception
+from pf2calcAttacks import Strike, SaveAttack, Save, Effect, Stitch, CombinedAttack, attackSwitcher, Fort, Reflex, Will, Perception
 from distribution import Distribution, DistributionsByType
 
 
@@ -293,6 +293,14 @@ class Selector:
         Selector.selections[key] = atkList
         Selector.keyList.append(key)
         
+    def duplicate(key):
+        attack = copy.deepcopy(Selector.selections.get(key))
+        newKey = key + "."
+        while(newKey in Selector.keyList):
+            newKey += "."
+        Selector.selections[newKey] = [attack]
+        Selector.keyList.append(newKey)
+        
     def removeSelection(key):
         Selector.selections.pop(key)
         Selector.keyList.remove(key)
@@ -302,6 +310,17 @@ class Selector:
         Selector.removeSelection(oldKey)
         Selector.selections[newKey] = attack
         Selector.keyList.append(newKey)
+        
+    def stitch(keyList):
+        key  = keyList[0]
+        attackList = []
+        for k in keyList:
+            attack = Selector.selections.get(k)
+            attackList += attack
+        Selector.selections[key] = [Stitch(attackList)]
+        for k in keyList[1:]:
+            Selector.selections.pop(k)
+            Selector.keyList.remove(k)
         
     def minSelections(newKey, oldKeyList):
         attackList = []
@@ -678,6 +697,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
     contextList = [normalContext, ffContext]
     
     for atk in routine: #for each strike in that routine
+        atk = atk.getAttackObject(level)
         newContextList = []
         for context in contextList:
             # calculate the effects for this attack
@@ -902,9 +922,8 @@ def graphChanceDebuff(routine, target, level, levelDiff, attackBonus, damageBonu
     chanceList = []
     
     if type(routine) is CombinedAttack:
-        # what if it contains more combined attacks?
-        print("not implimented")
-        raise Exception("Can't handle Combinded Attacks")
+        for atk in routine.validFor(level):
+            return graphChanceDebuff(atk, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus, displayPersistent)
     
     contextList = generateContextList(routine, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus)
         

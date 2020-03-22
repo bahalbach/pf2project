@@ -1148,6 +1148,25 @@ def on_combineSelection_clicked(b):
             updateEDBLGraph()
 combineSelectionButton.on_click(on_combineSelection_clicked)
 
+stitchButton = widgets.Button(description="Stitch Selections")
+def on_stitchButton_clicked(b):
+    if not Selector.canCombine(selections.value):
+        return
+    
+    if len(selections.value) >1:
+        
+        value = selections.value
+        Selector.stitch(value)
+            
+        # remove parts from Selections
+        l = list(selections.options)
+        for s in value[1:]:   
+#            Selector.removeSelection(s) # already removed in stich()
+            l.remove(s)
+        selections.options = l
+        updateEDBLGraph()
+stitchButton.on_click(on_stitchButton_clicked)
+    
 minButton = widgets.Button(description="Min/rename Selections")
 def on_minButton_clicked(b):
     if (newNameBox.value == ""):
@@ -1576,8 +1595,8 @@ featureLevels = widgets.VBox([featureLevel1,featureLevel2,featureLevel3,featureL
 selectorBox = widgets.VBox([classSelector,selector])
 selectorRow = widgets.HBox([selectorBox,selectorModifiers,weaponModifiers,featureModifiers,featureLevels])
 
-selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,combineSelectionButton,minButton,maxButton,sumButton,difButton,newNameBox],
-                                 layout=widgets.Layout(height='80%'))
+selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,combineSelectionButton,stitchButton,minButton,maxButton,sumButton,difButton,newNameBox],
+                                 layout=widgets.Layout(height='90%'))
 selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='300px'))
 printButtonRow = widgets.HBox([printButton,printSelectionButton])
 ExpectedDamageByLevelWidget = widgets.VBox([targetRow,

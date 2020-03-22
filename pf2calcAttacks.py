@@ -1305,6 +1305,8 @@ class AtkSelection:
             
             self.minL = 1
             self.maxL = 20
+        def getAttackObject(self,level):
+            return self
             
         def critSuccessResult(self, level, db):
             return 0
@@ -1858,7 +1860,23 @@ class AtkSelection:
         
         def info(self):
             return self.name + ": " + self.details
-
+class Stitch:
+    def __init__(self, attackList):
+        self.attackList = attackList
+        
+    def getAttackObject(self,level):
+        for attack in self.attackList:
+            if not attack.getAttack(level) is None:
+                return attack.getAttackObject(level)
+        raise Exception("No valid attack")
+        return None
+    def getAttack(self, level):
+        for attack in self.attackList:
+            if not attack.getAttack(level) is None:
+                return attack.getAttack(level)
+        else:
+            return None
+        
 class Strike(AtkSelection):
     def __init__(self, attack, damage, isWeapon=True, csLevel=21):
         super().__init__(attack, damage)
@@ -2766,6 +2784,7 @@ class Quicksilver(Effect):
         r = Result(self,Distribution(),Distribution())
         r.setAttack = self.getAttack(level)
         return r
+    
 class CombinedAttack:
     PDWeight = 0
     def __init__(self, attackList, function=min):
