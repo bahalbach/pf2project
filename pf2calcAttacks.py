@@ -375,7 +375,14 @@ for i in sProf:
         sProf[i] += 2
     if i >= 19:
         sProf[i] +=2
-    
+ 
+alchProf = {i: i+2 for i in range(1,21)}
+for i in alchProf:
+    if i >= 9:
+        alchProf[i] += 2
+    if i >= 17:
+        alchProf[i] += 2
+        
 barbProf = {i: i+2 for i in range(1,21)}
 for i in barbProf:
     if i >= 11:
@@ -491,6 +498,8 @@ fighterAttackBonus = {i: fProf[i]  + wiBonus[i] for i in range(1,21)}
 cantripAttackBonus = {i: sProf[i]  for i in range(1,21)}
 spellDC = {i: 10 + cantripAttackBonus[i] for i in range(1,21)}
 warpriestDC = {i: 10 + wsProf[i] for i in range(1,21)}
+
+alchemistDC = {i: 10 + alchProf[i] for i in range(1,21)}
 
 barbarianDC = {i: 10 + barbProf[i] for i in range(1,21)}
 spiritswrathattackBonus = {i: mProf[i] + 2 for i in range(1,21)}
@@ -1125,6 +1134,11 @@ class Result:
         self.ignoreNext = False
         self.setAttack = None
         
+        self.addConcealment = False
+        self.removeConcealment = False
+        self.addHidden = False
+        self.removeHidden = False
+        
         self.atk = atk
         self.ishit = False
         self.iscrit = False
@@ -1282,7 +1296,12 @@ class AtkSelection:
             self.goodStupified = 0
             self.veryGoodStupified = 0
             
+            self.ignoreNextonMiss = False
             
+            self.addConcealment = False
+            self.removeConcealment = False
+            self.addHidden = False
+            self.removeHidden = False
             
             self.minL = 1
             self.maxL = 20
@@ -2000,12 +2019,17 @@ class Strike(AtkSelection):
         r.sickened = self.okaySickened
         r.stupified = self.okayStupified
         
+        if self.ignoreNextonMiss:
+            r.ignoreNext
+            
         return r
         
     def critFailureResult(self, level, context):
         context.getExtraDamage() # just clear this
         r = Result(self, Distribution(), Distribution())
         r.setCritFail()
+        if self.ignoreNextonMiss:
+            r.ignoreNext
         return r
 
 class MeleeStrike(Strike):
@@ -2067,6 +2091,33 @@ class BombStrike(Strike):
         return True
     def setSecondaryAS(self, score):
         return False
+    
+class DBombStrike(RangedStrike):
+    def __init__(self, attack):
+        super().__init__(attack, noneDamage)
+        self.isWeapon = False
+        
+    def critSuccessResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.setCrit()
+        return r
+    
+    def successResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.setHit()
+        return r
+        
+    def failureResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.setFail()
+        r.ignoreNext = True
+        return r
+        
+    def critFailureResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.setCritFail()
+        r.ignoreNext = True
+        return r
         
 class CantripStrike(Strike):
     def __init__(self, attack, damage):
@@ -2388,6 +2439,14 @@ class Save(AtkSelection):
         r.sickened = self.goodSickened
         r.stupified = self.goodStupified
         
+        r.addConcealment = self.addConcealment
+        r.addHidden = self.addHidden
+        r.removeConcealment = self.removeConcealment
+        r.removeHidden = self.removeHidden
+       
+        if self.ffonFail(level):
+            r.setFutureAttacksFF()
+        
         return r
         
     def critFailureResult(self, level, context):
@@ -2446,6 +2505,14 @@ class Save(AtkSelection):
         r.sickened = self.veryGoodSickened
         r.stupified = self.veryGoodStupified
         
+        r.addConcealment = self.addConcealment
+        r.addHidden = self.addHidden
+        r.removeConcealment = self.removeConcealment
+        r.removeHidden = self.removeHidden
+        
+        if self.ffonFail(level):
+            r.setFutureAttacksFF()
+            
         return r
     
 class CantripSave(Save):
@@ -2541,6 +2608,12 @@ class PKSave(Save):
         r.stupified = self.veryGoodStupified
         
         return r
+
+class TDSave(Save):
+    def __init__(self, dc, damage):
+        super().__init__(dc, damage)
+    def successResult(self, level, context):
+        return super().failureResult(level, context)
     
 class AttackSave(AtkSelection):
     def __init__(self, dc, damage):
@@ -2566,10 +2639,7 @@ class Effect(AtkSelection):
         self.flatfootNextStrike = False
         self.flatfoot = False
         self.trueStrike = False
-        self.addConcealment = False
-        self.removeConcealment = False
-        self.addHidden = False
-        self.removeHidden = False
+        
         
         self.addfirsthitdamage = None
         self.addsecondhitdamage = None 
@@ -2778,6 +2848,15 @@ alchemistbsacids.splashDamage = sbomberSplashDamage
 alchemistbsacids.stickybombLevel = 8
 alchemistbsacids.persDamageType = Acid
 
+alchemistbdacids = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdacids.isWeapon = False
+alchemistbdacids.weaponDamage = sacidFlaskDamage
+alchemistbdacids.persDamageDice = sacidFlaskPersDamage
+#alchemistbdacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
+alchemistbdacids.splashDamage = sbomberSplashDamage
+alchemistbdacids.persDamageType = Acid
+alchemistbdacids.ignoreNextonMiss = True
+
 alchemistpacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistpacids.isWeapon = False
 alchemistpacids.weaponDamage = pacidFlaskDamage
@@ -2802,6 +2881,15 @@ alchemistbpsacids.persDamageDice = pacidFlaskPersDamage
 alchemistbpsacids.splashDamage = pbomberSplashDamage
 alchemistbpsacids.stickybombLevel = 8
 alchemistbpsacids.persDamageType = Acid
+
+alchemistbpdacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdacids.isWeapon = False
+alchemistbpdacids.weaponDamage = pacidFlaskDamage
+alchemistbpdacids.persDamageDice = pacidFlaskPersDamage
+#alchemistbpsacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
+alchemistbpdacids.splashDamage = pbomberSplashDamage
+alchemistbpdacids.persDamageType = Acid
+alchemistbpdacids.ignoreNextonMiss = True
 
 alchemistfires = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistfires.isWeapon = False
@@ -2828,6 +2916,15 @@ alchemistbsfires.splashDamage = sbomberSplashDamage
 alchemistbsfires.stickybombLevel = 8
 alchemistbsfires.persDamageType = Fire
 
+alchemistbdfires = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdfires.isWeapon = False
+alchemistbdfires.weaponDamageDice = salchemistsFireDamage
+alchemistbdfires.persDamage = salchemistsFirePersDamage
+#alchemistbdfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
+alchemistbdfires.splashDamage = sbomberSplashDamage
+alchemistbdfires.persDamageType = Fire
+alchemistbdfires.ignoreNextonMiss = True
+
 alchemistpfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistpfires.isWeapon = False
 alchemistpfires.weaponDamageDice = palchemistsFireDamage
@@ -2853,6 +2950,15 @@ alchemistbpsfires.splashDamage = pbomberSplashDamage
 alchemistbpsfires.stickybombLevel = 8
 alchemistbpsfires.persDamageType = Fire
 
+alchemistbpdfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdfires.isWeapon = False
+alchemistbpdfires.weaponDamageDice = palchemistsFireDamage
+alchemistbpdfires.persDamage = palchemistsFirePersDamage
+#alchemistbpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
+alchemistbpdfires.splashDamage = pbomberSplashDamage
+alchemistbpdfires.persDamageType = Fire
+alchemistbpdfires.ignoreNextonMiss = True
+
 alchemistfrosts = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistfrosts.isWeapon = False
 alchemistfrosts.weaponDamageDice = blfvDamage
@@ -2870,6 +2976,13 @@ alchemistbsfrosts.splashDamage = sbomberSplashDamage
 alchemistbsfrosts.stickybombLevel = 8
 alchemistbsfrosts.persDamageType = Cold
 
+alchemistbdfrosts = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdfrosts.isWeapon = False
+alchemistbdfrosts.weaponDamageDice = sblfvDamage
+alchemistbdfrosts.splashDamage = sbomberSplashDamage
+alchemistbdfrosts.persDamageType = Cold
+alchemistbdfrosts.ignoreNextonMiss = True
+
 alchemistpfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistpfrosts.isWeapon = False
 alchemistpfrosts.weaponDamageDice = pblfvDamage
@@ -2877,15 +2990,22 @@ alchemistpfrosts.splashDamage = pbombSplashDamage
 
 alchemistbpfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpfrosts.isWeapon = False
-alchemistbpfrosts.weaponDamageDiceDice = pblfvDamage
+alchemistbpfrosts.weaponDamageDice = pblfvDamage
 alchemistbpfrosts.splashDamage = pbomberSplashDamage
 
 alchemistbpsfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpsfrosts.isWeapon = False
-alchemistbpsfrosts.weaponDamageDiceDice = pblfvDamage
+alchemistbpsfrosts.weaponDamageDice = pblfvDamage
 alchemistbpsfrosts.splashDamage = pbomberSplashDamage
 alchemistbpsfrosts.stickybombLevel = 8
 alchemistbpsfrosts.persDamageType = Cold
+
+alchemistbpdfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdfrosts.isWeapon = False
+alchemistbpdfrosts.weaponDamageDice = pblfvDamage
+alchemistbpdfrosts.splashDamage = pbomberSplashDamage
+alchemistbpdfrosts.persDamageType = Cold
+alchemistbpdfrosts.ignoreNextonMiss = True
 
 alchemistlightnings = BombStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistlightnings.isWeapon = False
@@ -2910,6 +3030,15 @@ alchemistbslightnings.splashDamage = sbomberSplashDamage
 alchemistbslightnings.stickybombLevel = 8
 alchemistbslightnings.persDamageType = Electricity
 
+alchemistbdlightnings = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdlightnings.isWeapon = False
+alchemistbdlightnings.setFFonCrit(1)
+alchemistbdlightnings.setFFonSuccess(1)
+alchemistbdlightnings.weaponDamageDice = sblfvDamage
+alchemistbdlightnings.splashDamage = sbomberSplashDamage
+alchemistbdlightnings.persDamageType = Electricity
+alchemistbdlightnings.ignoreNextonMiss= True
+
 alchemistplightnings = BombStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistplightnings.isWeapon = False
 alchemistplightnings.setFFonCrit(1)
@@ -2933,6 +3062,15 @@ alchemistbpslightnings.splashDamage = pbomberSplashDamage
 alchemistbpslightnings.stickybombLevel = 8
 alchemistbpslightnings.persDamageType = Electricity
 
+alchemistbpdlightnings = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdlightnings.isWeapon = False
+alchemistbpdlightnings.setFFonCrit(1)
+alchemistbpdlightnings.setFFonSuccess(1)
+alchemistbpdlightnings.weaponDamageDice = pblfvDamage
+alchemistbpdlightnings.splashDamage = pbomberSplashDamage
+alchemistbpdlightnings.persDamageType = Electricity
+alchemistbpdlightnings.ignoreNextonMiss
+
 alchemistbestialClawStrike = MeleeStrike(mutagenstrikeAttackBonus, alchemistBestialDamage)
 alchemistbestialClawStrike.weaponDamageDice = bestialClawDamageDice
 
@@ -2944,6 +3082,55 @@ alchemistferalClawStrike.weaponDamageDice = feralClawDamageDice
 
 alchemistferalJawStrike = MeleeStrike(mutagenstrikeAttackBonus, alchemistBestialDamage)
 alchemistferalJawStrike.weaponDamageDice = feralJawDamageDice
+
+alchemistDebilitatingBomb = DBombStrike(sbombAttackBonus)
+alchemistPDebilitatingBomb = DBombStrike(pbombAttackBonus)
+
+debilitatingFlatFootedSave = Save(alchemistDC,noneDamage)
+debilitatingFlatFootedSave.isSpell = False
+debilitatingFlatFootedSave.ffonFailLevel = 1
+
+debilitatingDazzledSave = Save(alchemistDC,noneDamage)
+debilitatingDazzledSave.isSpell = False
+debilitatingDazzledSave.addConcealment = True
+
+debilitatingClumsySave = Save(alchemistDC,noneDamage)
+debilitatingClumsySave.isSpell = False
+debilitatingClumsySave.goodClumsy = 1
+debilitatingClumsySave.veryGoodClumsy = 1
+
+debilitatingEnfeebledSave = Save(alchemistDC,noneDamage)
+debilitatingEnfeebledSave.isSpell = False
+debilitatingEnfeebledSave.goodEnfeebled = 1
+debilitatingEnfeebledSave.veryGoodEnfeebled = 1
+
+debilitatingStupifiedSave = Save(alchemistDC,noneDamage)
+debilitatingStupifiedSave.isSpell = False
+debilitatingStupifiedSave.goodStupified = 1
+debilitatingStupifiedSave.veryGoodStupified = 1
+
+debilitatingTrueClumsySave = Save(alchemistDC,noneDamage)
+debilitatingTrueClumsySave.isSpell = False
+debilitatingTrueClumsySave.goodClumsy = 2
+debilitatingTrueClumsySave.veryGoodClumsy = 2
+
+debilitatingTrueEnfeebledSave = Save(alchemistDC,noneDamage)
+debilitatingTrueEnfeebledSave.isSpell = False
+debilitatingTrueEnfeebledSave.goodEnfeebled = 2
+debilitatingTrueEnfeebledSave.veryGoodEnfeebled = 2
+
+debilitatingTrueStupifiedSave = Save(alchemistDC,noneDamage)
+debilitatingTrueStupifiedSave.isSpell = False
+debilitatingTrueStupifiedSave.goodStupified = 2
+debilitatingTrueStupifiedSave.veryGoodStupified = 2
+
+debilitatingTrueFlatFootedSave = TDSave(alchemistDC,noneDamage)
+debilitatingTrueFlatFootedSave.isSpell = False
+debilitatingTrueFlatFootedSave.ffonFailLevel = 1
+
+debilitatingTrueDazzledSave = TDSave(alchemistDC,noneDamage)
+debilitatingTrueDazzledSave.isSpell = False
+debilitatingTrueDazzledSave.addConcealment = True
 
 alchemistAttackSwitcher = {'Alchemist Melee Strike': [alchemistStrike],
                     'Alchemist Ranged Strike': [alchemistRangedStrike],
@@ -2958,27 +3145,47 @@ alchemistAttackSwitcher = {'Alchemist Melee Strike': [alchemistStrike],
                     'Alchemist Acid Flask': [alchemistacids],
                     'Alchemist Bomber Acid': [alchemistbacids],
                     'Alchemist Sticky Acid': [alchemistbsacids],
+                    'Alchemist Debilitating Acid': [alchemistbdacids],
                     'Alchemist Perpetual Acid': [alchemistpacids],
                     'Alchemist Bomber Perpetual Acid': [alchemistbpacids],
                     'Alchemist Sticky Perpetual Acid': [alchemistbpsacids],
+                    'Alchemist Debilitating Perpetual Acid': [alchemistbpdacids],
                     'Alchemist Fire': [alchemistfires],
                     'Alchemist Bomber Fire': [alchemistbfires],
                     'Alchemist Sticky Fire': [alchemistbsfires],
+                    'Alchemist Debilitating Fire': [alchemistbdfires],
                     'Alchemist Perpetual Fire': [alchemistpfires],
                     'Alchemist Bomber Perpetual Fire': [alchemistbpfires],
                     'Alchemist Sticky Perpetual Fire': [alchemistbpsfires],
+                    'Alchemist Debilitating Perpetual Fire': [alchemistbpdfires],
                     'Alchemist Bottled Lightning': [alchemistlightnings],
                     'Alchemist Bomber Lightning': [alchemistblightnings],
                     'Alchemist Sticky Lightning': [alchemistbslightnings],
+                    'Alchemist Debilitating Lightning': [alchemistbdlightnings],
                     'Alchemist Perpetual Lightning': [alchemistplightnings],
                     'Alchemist Bomber Perpetual Lightning': [alchemistbplightnings],
                     'Alchemist Sticky Perpetual Lightning': [alchemistbpslightnings],
+                    'Alchemist Debilitating Perpetual Lightning': [alchemistbpdlightnings],
                     'Alchemist Frost Vial': [alchemistfrosts],
                     'Alchemist Bomber Frost': [alchemistbfrosts],
                     'Alchemist Sticky Frost': [alchemistbsfrosts],
+                    'Alchemist Debilitating Frost': [alchemistbdfrosts],
                     'Alchemist Perpetual Frost': [alchemistpfrosts],
                     'Alchemist Bomber Perpetual Frost': [alchemistbpfrosts],
-                    'Alchemist Sticky Perpetual Frost': [alchemistbpsfrosts]}
+                    'Alchemist Sticky Perpetual Frost': [alchemistbpsfrosts],
+                    'Alchemist Debilitating Perpetual Frost': [alchemistbpdfrosts],
+                    'Debilitating Bomb': [alchemistDebilitatingBomb],
+                    'Debilitating Perpetual': [alchemistPDebilitatingBomb],
+                    'Debilitating Flat-Footed Save': [debilitatingFlatFootedSave],
+                    'Debilitating Dazzled Save': [debilitatingDazzledSave],
+                    'Debilitating Clumsy Save': [debilitatingClumsySave],
+                    'Debilitating Enfeebled Save': [debilitatingEnfeebledSave],
+                    'Debilitating Stupified Save': [debilitatingStupifiedSave],
+                    'Debilitating True Flat-Footed Save': [debilitatingTrueFlatFootedSave],
+                    'Debilitating True Dazzled Save': [debilitatingTrueDazzledSave],
+                    'Debilitating True Clumsy 2 Save': [debilitatingTrueClumsySave],
+                    'Debilitating True Enfeebled 2 Save': [debilitatingTrueEnfeebledSave],
+                    'Debilitating True Stupified 2 Save': [debilitatingTrueStupifiedSave]}
 
 # Barbarian
 # rage, instinct, devastator
@@ -3023,6 +3230,31 @@ spiritsWrath.isWeapon = False
 spiritsWrath.minL = 12
 spiritsWrath.weaponDamageDice = {i: 4*[d8] for i in range(1,21)}
 
+viciousEvisceration = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+viciousEvisceration.goodDrained = 1
+viciousEvisceration.veryGoodDrained = 2
+
+viciousEviscerationAnimal = MeleeStrike(martialAttackBonus, barbariananimaldamage, csLevel=5)
+viciousEviscerationAnimal.goodDrained = 1
+viciousEviscerationAnimal.veryGoodDrained = 2
+viciousEviscerationAnimal.weaponDamageDice = animalJawDamageDice
+
+viciousEviscerationDragon = MeleeStrike(martialAttackBonus, barbariandragondamage, csLevel=5)
+viciousEviscerationDragon.goodDrained = 1
+viciousEviscerationDragon.veryGoodDrained = 2
+
+viciousEviscerationFury = MeleeStrike(martialAttackBonus, barbarianfurydamage, csLevel=5)
+viciousEviscerationFury.goodDrained = 1
+viciousEviscerationFury.veryGoodDrained = 2
+
+viciousEviscerationGiant = MeleeStrike(martialAttackBonus, barbariangiantdamage, csLevel=5)
+viciousEviscerationGiant.goodDrained = 1
+viciousEviscerationGiant.veryGoodDrained = 2
+
+viciousEviscerationSpirit = MeleeStrike(martialAttackBonus, barbarianspiritdamage, csLevel=5)
+viciousEviscerationSpirit.goodDrained = 1
+viciousEviscerationSpirit.veryGoodDrained = 2
+
 barbarianAttackSwitcher = {'Barbarian Animal Claw': [barbariananimalclaws],
                     'Barbarian Animal Jaw': [barbariananimaljaws],
                     'Barbarian Dragon Strike': [barbariandragonstrike],
@@ -3036,7 +3268,13 @@ barbarianAttackSwitcher = {'Barbarian Animal Claw': [barbariananimalclaws],
                     'Barbarian Fury Thrash': [barbFuryThrash],
                     'Barbarian Giant Thrash': [barbGiantThrash],
                     'Barbarian Spirit Thrash': [barbSpiritThrash],
-                    "Barbarian Spirit's Wrath": [spiritsWrath]}
+                    "Barbarian Spirit's Wrath": [spiritsWrath],
+                    'Vicious Evisceration': [viciousEvisceration],
+                    'Vicious Evisceration Animal': [viciousEviscerationAnimal],
+                    'Vicious Evisceration Dragon': [viciousEviscerationDragon],
+                    'Vicious Evisceration Fury': [viciousEviscerationFury],
+                    'Vicious Evisceration Giant': [viciousEviscerationGiant],
+                    'Vicious Evisceration Spirit': [viciousEviscerationSpirit]}
 
 
 casterstrike = MeleeStrike(casterAttackBonus, strCasterDamage, csLevel=11)
