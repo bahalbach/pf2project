@@ -109,7 +109,9 @@ def targetPerChangedResponse(change):
     
 customTarget = widgets.Checkbox(
         value=False,
-        description="Use Custom Target:"
+        description="Use Custom Target:",
+        indent=False,
+        layout=widgets.Layout(width='Auto')
         )
 customAC = widgets.BoundedIntText(
         value=20.0,
@@ -193,7 +195,8 @@ persistentDamageWeightBox = widgets.BoundedFloatText(
 persistentDamageReroll = widgets.Checkbox(
         value=False,
         description="Reroll Persistent Damage Every time:",
-        layout=widgets.Layout(width='12%')
+        layout=widgets.Layout(width='12%'),
+        indent=False
 )
 
 flatfootedBox = widgets.BoundedIntText(
@@ -331,6 +334,11 @@ levelViewSelector = widgets.Dropdown(
                    'Cumulative Distribution'],
         value='Expected Damage by AC'
 )
+
+calculateButton = widgets.Button(description="Calculate!")
+def on_calculateButton_clicked(b):
+    calculateGraph()
+calculateButton.on_click(on_calculateButton_clicked)
 
 
 abilityScoreOptions = ['10 No Boost',
@@ -1322,6 +1330,8 @@ g.update_layout(title_text="Expected damage by level",
 #g.layout.yaxis.range = [0,60]
 
 def updateEDBLGraph():
+    pass
+def calculateGraph():
     global data
     CombinedAttack.PDWeight = persistentDamageWeightBox.value
     CombinedAttack.PersistentReRoll = persistentDamageReroll.value
@@ -1386,7 +1396,7 @@ def updateEDBLGraph():
                                          
         
             # update legend size
-            g.update_layout(height=500+10*len(nameList))
+            g.update_layout(height=500+20*len(nameList))
         
             g.update_layout(title_text=titleText,
                             xaxis_title_text=xaxisText,
@@ -1517,7 +1527,7 @@ def updateEDBLGraph():
             g.add_trace(go.Scatter(x=xLists[i],y=yLists[i],name=nameList[i]))
         
         # update legend size
-        g.update_layout(height=500+10*len(nameList))
+        g.update_layout(height=500+20*len(nameList))
         if byLevelView.value:
             g.update_layout(title_text=titleText,
                             xaxis_title_text=xaxisText,
@@ -1607,13 +1617,36 @@ selectionsButtons = widgets.VBox([removeSelectionButton,movetotopButton,duplicat
                                  layout=widgets.Layout(height='100%'))
 selectionsBox = widgets.HBox([selections,selectionsButtons],layout=widgets.Layout(height='300px'))
 printButtonRow = widgets.HBox([printButton,printSelectionButton])
+
 ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
                                             customRow,
                                             debuffs,
                                             adjustments,
               levelViewRow,
               g,
+              calculateButton,
              selectorRow,
              selectionsBox,
              printButtonRow,
+             printBox])
+            
+mtargetRow = widgets.VBox([levelDiff, targetACSelector, targetFortSelector, targetRefSelector,targetWillSelector, targetPerSelector])
+mcustomRow = widgets.VBox([customTarget,customAC,customFort,customRef,customWill,customPer])
+mdebuffs = widgets.VBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
+madjustments = widgets.VBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox,persistentDamageReroll]) #weakness, applyDebuffs
+mlevelViewRow = widgets.VBox([percentageView,byLevelView,levelSelector,levelViewSelector])
+mselectorRow = widgets.VBox([selectorBox,selectorModifiers,weaponModifiers,featureModifiers,featureLevels])
+mselectionsBox = widgets.VBox([selections,selectionsButtons],layout=widgets.Layout(height='300px'))
+mprintButtonRow = widgets.VBox([printButton,printSelectionButton])
+
+MobileViewWidget = widgets.VBox([mtargetRow,
+                                            mcustomRow,
+                                            mdebuffs,
+                                            madjustments,
+              mlevelViewRow,
+              g,
+              calculateButton,
+             mselectorRow,
+             mselectionsBox,
+             mprintButtonRow,
              printBox])
