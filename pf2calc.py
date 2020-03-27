@@ -247,6 +247,9 @@ class Selector:
                      damageBonus, additionalDamage, spellLevelMod, weaponDamage, 
                      weaponCritDamage, weaponCritSpec, weaponFeatures, 
                      minLevel, maxLevel):
+        while(key in Selector.keyList):
+            key += "."
+            
         attack = attackSwitcher[value][0]
         newAttack = copy.deepcopy(attack)
         newAttack.name = key
@@ -269,9 +272,10 @@ class Selector:
         newAttack.setLevels(minLevel, maxLevel)
         
         
-        
+
         Selector.selections[key] = [newAttack]
         Selector.keyList.append(key)
+        return key
 		
     def combineSelections(key, keyList):
         # check if it's a combined attack, can't combine them

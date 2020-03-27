@@ -1099,9 +1099,8 @@ def on_addSelection_clicked(b):
                 [featureSelection7.value,featureLevel7.value],
                 [featureSelection8.value,featureLevel8.value]
                 ]
-        if not (name in selections.options):
-            selections.options += (name,)
-            Selector.addSelection(name,
+
+        name = Selector.addSelection(name,
                                   s,
                                   primaryAbilityScore.value,
                                   secondaryAbilityScore.value,
@@ -1115,6 +1114,7 @@ def on_addSelection_clicked(b):
                                   criticalSpecialization.value,
                                   weaponFeatures,
                                   minLevel,maxLevel)
+        selections.options += (name,)
 #    attackModifier.value = 0
 #    additionalDamage.value = 0
 #    damageModifier.value = 0

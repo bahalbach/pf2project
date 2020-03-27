@@ -2814,7 +2814,7 @@ class CombinedAttack:
             else:
                 srhas = True
                 for st in sr:
-                    if not st.getAttack(level):
+                    if st.getAttack(level) is None:
                         srhas = False
             if srhas: return True
         return False
@@ -2829,7 +2829,7 @@ class CombinedAttack:
             else:
                 srhas = True
                 for st in sr:
-                    if not st.getAttack(level):
+                    if st.getAttack(level) is None:
                         srhas = False
                 if srhas: validAttackList.append(sr)
         return validAttackList
