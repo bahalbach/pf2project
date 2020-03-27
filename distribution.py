@@ -184,6 +184,11 @@ class Distribution:
         self.average = None
         return self
     
+    def addDistributions(self, dists):
+        for d in dists.distributions.values():
+            self.combine(d)
+            
+    
     def minimum(self):
         if Distribution.OnlyAverage:
             raise Exception("no min")

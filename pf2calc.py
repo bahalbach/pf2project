@@ -421,8 +421,11 @@ class Context:
         
         self.damageBonus = 0
 
-        self.damageChances = DamageChanceRecord()
-        self.persChances = DamageChanceRecord()
+        if Distribution.OnlyAverage:
+            self.damageChances = DamageChanceAverageRecord()
+        else:
+            self.damageChances = DamageChanceRecord()
+        # self.persChances = DamageChanceRecord()
         self.applyChance(chance)
         
         self.thisStrikeBonus = 0
@@ -468,7 +471,7 @@ class Context:
         self.damageBonus = oldContext.damageBonus
         
         self.damageChances = copy.deepcopy(oldContext.damageChances)
-        self.persChances = copy.deepcopy(oldContext.persChances)
+        # self.persChances = copy.deepcopy(oldContext.persChances)
         self.applyChance(chance)
         
         self.thisStrikeBonus = oldContext.thisStrikeBonus
@@ -557,27 +560,17 @@ class Context:
         damageDist.addBonus(damage)
         # self.persDists = DistributionsByType()
         persDist = result.persDist
-# #               
-#         if self.oldContext.damageDist:
-#             self.damageDist.combine(self.oldContext.damageDist)
-#         if self.oldContext.persDists:
-#             if CombinedAttack.PersistentReRoll or DistributionsByType.OnlyAverage:
-#                 self.persDists.selectMaxDists(self.oldContext.persDists)
-#             else:
-#                 self.persDists.combineMaxDists(self.oldContext.persDists)
-               
-
+        
         self.damageChances.add(damageDist, result.good, result.veryGood)
         if CombinedAttack.PersistentReRoll or Distribution.OnlyAverage:
-            self.persChances.selectMax(persDist)
+            self.damageChances.selectMax(persDist)
         else:
-            self.persChances.combineMax(persDist)
-                
+            self.damageChances.combineMax(persDist)
+        # self.oldContext = None
     def getChance(self):
         return self.damageChances.getChance()
     def applyChance(self, chance):
         self.damageChances.applyChance(chance)
-        self.persChances.applyChance(chance)
         
     def setFlatfooted(self):
         self.origffstatus = True
@@ -657,7 +650,7 @@ class Context:
         #     return self.persDists.getAverage() * self.getChance()
         # else:
         #     return 0
-        return self.persChances.getAverage()
+        return self.damageChances.getPersAverage()
     def numberHits(self):
         # if self.oldContext:
         #     return (self.chance*self.isHit) + self.oldContext.numberHits()
@@ -673,18 +666,17 @@ class Context:
     
     def generate(self):
         dl = len(self.damageChances.chances)
-        pl = len(self.persChances.chances)
-        if dl != pl:
-            raise Exception("distributions not equal")
+        # pl = len(self.persChances.chances)
+        # if dl != pl:
+            # raise Exception("distributions not equal")
         for i in range(dl):
             chance = self.damageChances.chances[i]
             dDists = self.damageChances.damages[i]
-            pDists = self.persChances.damages[i]
+            pDists = self.damageChances.persDamages[i]
             yield chance, dDists, pDists
             
     def combine(self, sameContext):
         self.damageChances.addDamageChances(sameContext.damageChances)
-        self.persChances.addDamageChances(sameContext.persChances)
     def __eq__(self, obj):
         
         if not isinstance(obj, Context):
@@ -731,7 +723,9 @@ class Context:
 class DamageChanceRecord:
     def __init__(self):
         self.chances = [1]
-        self.damages = [DistributionsByType()]
+        self.damages = [Distribution()]
+        self.persDamages = [DistributionsByType()]
+            
         self.hits = [0]
         self.crits = [0]
     def getChance(self):
@@ -742,20 +736,21 @@ class DamageChanceRecord:
             
     def add(self, dist, isHit, isCrit):
         for i in range(len(self.damages)):
-            self.damages[i].add(dist)   
+            self.damages[i].combine(dist)   
             if isHit:
                 self.hits[i] += 1
             if isCrit:
                 self.crits[i] +=1
     def selectMax(self, dist):
-        for i in range(len(self.damages)):
-            self.damages[i].selectMax(dist)
+        for i in range(len(self.persDamages)):
+            self.persDamages[i].selectMax(dist)
     def combineMax(self, dist):
-        for i in range(len(self.damages)):
-            self.damages[i].combineMax(dist)
+        for i in range(len(self.persDamages)):
+            self.persDamages[i].combineMax(dist)
     def addDamageChances(self, damageChanceRecord):
         self.chances += damageChanceRecord.chances
         self.damages += damageChanceRecord.damages
+        self.persDamages += damageChanceRecord.persDamages
         self.hits += damageChanceRecord.hits
         self.crits += damageChanceRecord.crits
         
@@ -766,6 +761,16 @@ class DamageChanceRecord:
             chance = self.chances[i]
             total += ave * chance
         return total
+    
+    def getPersAverage(self):
+        total = 0
+        for i in range(len(self.chances)):
+
+            ave = self.persDamages[i].getAverage()
+            chance = self.chances[i]
+            total += ave * chance
+        return total
+    
     def getHits(self):
         total = 0
         for i in range(len(self.chances)):
@@ -783,6 +788,94 @@ class DamageChanceRecord:
 #    
 #    def getDamageDist(self):
 #        return self.damageDistributions.generate()
+
+class DamageChanceAverageRecord:
+    def __init__(self):
+        self.chance = 1
+        self.persChances = [1]
+
+        self.damage = 0
+        self.persDamages = [{}]
+
+        self.hits = 0
+        self.crits = 0
+        
+    def getChance(self):
+        return self.chance
+    
+    def applyChance(self, chance):
+        self.chance *= chance
+        for i in range(len(self.persChances)):
+            self.persChances[i] *= chance 
+        
+    def add(self, dist, isHit, isCrit):
+        self.damage += dist.getAverage()
+        self.hits += 1
+        self.crits +=1
+        # for i in range(len(self.damages)):
+        #     self.damages[i] += dist.getAverage()
+  
+        #     if isHit:
+        #         self.hits[i] += 1
+        #     if isCrit:
+        #         self.crits[i] +=1
+    def selectMax(self, dist):
+        ave = dist.getAverage()
+        if(ave==0):
+            return
+        for i in range(len(self.persDamages)):
+            if dist.type in self.persDamages[i]:
+                self.persDamages[i][dist.type] = max(ave, self.persDamages[i][dist.type])
+            else:
+                self.persDamages[i][dist.type] = ave
+
+
+    def addDamageChances(self, damageChanceRecord):
+        weightedDamage = self.chance*self.damage + damageChanceRecord.chance*damageChanceRecord.damage
+        weightedHits = self.chance*self.hits + damageChanceRecord.chance*damageChanceRecord.hits
+        weightedCrits = self.chance*self.crits + damageChanceRecord.chance*damageChanceRecord.crits
+        self.chance += damageChanceRecord.chance 
+        self.damage = weightedDamage / self.chance
+        self.hits = weightedHits / self.chance
+        self.crits = weightedCrits / self.chance
+        
+        for i in range(len(damageChanceRecord.persChances)):
+            newPersDict = damageChanceRecord.persDamages[i]
+            found = False
+            for ii in range(len(self.persChances)):
+                persDict = self.persDamages[ii]
+                if persDict == newPersDict:
+                    self.persChances[ii] += damageChanceRecord.persChances[i]
+                    found = True
+                    break
+            if not found:
+                self.persChances.append(damageChanceRecord.persChances[i])
+                self.persDamages.append(damageChanceRecord.persDamages[i])
+
+    def getAverage(self):
+        return self.chance * self.damage
+        # for i in range(len(self.chances)):
+        #     if Distribution.OnlyAverage:
+        #         ave = self.damages[i]
+        #     else:
+        #         ave = self.damages[i].getAverage()
+        #     chance = self.chances[i]
+        #     total += ave * chance
+        # return total
+    
+    def getPersAverage(self):
+        total = 0
+        for i in range(len(self.persChances)):
+            if Distribution.OnlyAverage:
+                ave = sum(self.persDamages[i].values())
+            chance = self.persChances[i]
+            total += ave * chance
+        return total
+    
+    def getHits(self):
+        return self.hits
+    def getCrits(self):
+        return self.crits
     
 def generateContextList(routine, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus):
     oContext = Context(None, 1, None)
@@ -795,10 +888,19 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
     oContext.frightened = target.frightened
     oContext.sickened = target.sickened
     oContext.stupified = target.stupified
-    normalContext = Context(oContext, 1-flatfootedStatus/100,None)
-    ffContext = Context(oContext, flatfootedStatus/100, None)
-    ffContext.setFlatfooted()
-    contextList = [normalContext, ffContext]
+    if (1-flatfootedStatus) != 0:
+        normalContext = Context(oContext, 1-flatfootedStatus/100,None)
+        if flatfootedStatus != 0:
+            ffContext = Context(oContext, flatfootedStatus/100, None)
+            ffContext.setFlatfooted()
+            contextList = [normalContext, ffContext]
+        else:
+            contextList = [normalContext]
+    else:
+        ffContext = Context(oContext, flatfootedStatus/100, None)
+        ffContext.setFlatfooted()
+        contextList = [ffContext]
+
     
     for atk in routine: #for each strike in that routine
         atk = atk.getAttackObject(level)
