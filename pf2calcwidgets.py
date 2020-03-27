@@ -4,16 +4,31 @@ from distribution import Distribution
 import plotly.graph_objects as go
 from ipywidgets import widgets
 
+targetLabel = widgets.Label(
+        value="Target:",
+        layout=widgets.Layout(height='auto', min_width='45px'),
+        tooltip="Target:"
+)
+
+levelDiffLabel = widgets.Label(
+        value="LevelDiff:",
+        layout=widgets.Layout(height='auto', min_width='65px'),
+        tooltip="Level Difference:"
+)
+
 levelDiff = widgets.BoundedIntText(
     value=0.0,
     min=-10.0,
     max=10.0,
     step=1.0,
-    description='Level difference:',
-    layout=widgets.Layout(width='12.5%')
+    layout=widgets.Layout(min_width='20px')
     #continuous_update=False
 )
 
+ACLabel = widgets.Label(
+        value="AC:",
+        layout=widgets.Layout(height='auto', min_width='15px')
+)
 targetACSelector = widgets.Dropdown(
     options=['average bestiary',
              'Extreme',
@@ -21,9 +36,9 @@ targetACSelector = widgets.Dropdown(
              'Moderate',
              'Low'],
     value='Moderate',
-    description='Target AC:',
-    layout=widgets.Layout(width='15%')
+    layout=widgets.Layout(min_width='20px')
 )
+
 
 targetSavesSelector = widgets.Dropdown(
 #    options=['average bestiary high',
@@ -42,6 +57,10 @@ targetSavesSelector = widgets.Dropdown(
     layout=widgets.Layout(width='auto')
 )
 
+fortLabel = widgets.Label(
+        value="Fort:",
+        layout=widgets.Layout(height='auto', min_width='15px')
+)
 targetFortSelector = widgets.Dropdown(
     options=['Extreme',
              'High',
@@ -49,8 +68,11 @@ targetFortSelector = widgets.Dropdown(
              'Low',
              'Terrible'],
     value='Moderate',
-    description='Target Fort:',
-    layout=widgets.Layout(width='17%')
+    layout=widgets.Layout(min_width='20px')
+)
+refLabel = widgets.Label(
+        value="Ref:",
+        layout=widgets.Layout(height='auto', min_width='15px')
 )
 targetRefSelector = widgets.Dropdown(
     options=['Extreme',
@@ -59,8 +81,11 @@ targetRefSelector = widgets.Dropdown(
              'Low',
              'Terrible'],
     value='Moderate',
-    description='Target Ref:',
-    layout=widgets.Layout(width='17%')
+    layout=widgets.Layout(min_width='20px')
+)
+willLabel = widgets.Label(
+        value="Will:",
+        layout=widgets.Layout(height='auto', min_width='15px')
 )
 targetWillSelector = widgets.Dropdown(
     options=['Extreme',
@@ -69,8 +94,11 @@ targetWillSelector = widgets.Dropdown(
              'Low',
              'Terrible'],
     value='Moderate',
-    description='Target Will:',
-    layout=widgets.Layout(width='17%')
+    layout=widgets.Layout(min_width='20px')
+)
+perLabel = widgets.Label(
+        value="Per:",
+        layout=widgets.Layout(height='auto', min_width='15px')
 )
 targetPerSelector = widgets.Dropdown(
     options=['Extreme',
@@ -79,8 +107,7 @@ targetPerSelector = widgets.Dropdown(
              'Low',
              'Terrible'],
     value='Moderate',
-    description='Target Perception:',
-    layout=widgets.Layout(width='17%')
+    layout=widgets.Layout(min_width='20px')
 )
 
 def targetACChangedResponse(change):
@@ -117,36 +144,31 @@ customAC = widgets.BoundedIntText(
         value=20.0,
         min=0.0,
         max=100,
-        description='AC:',
-        layout=widgets.Layout(width='15%')
+        layout=widgets.Layout(min_width='20px')
         )
 customFort = widgets.BoundedIntText(
         value=10.0,
         min=-10.0,
         max=100,
-        description='Fort:',
-        layout=widgets.Layout(width='15%')
+        layout=widgets.Layout(min_width='20px')
         )
 customRef = widgets.BoundedIntText(
         value=10.0,
         min=-10.0,
         max=100,
-        description='Reflex:',
-        layout=widgets.Layout(width='15%')
+        layout=widgets.Layout(min_width='20px')
         )
 customWill = widgets.BoundedIntText(
         value=10.0,
         min=-10.0,
         max=100,
-        description='Will:',
-        layout=widgets.Layout(width='15%')
+        layout=widgets.Layout(min_width='20px')
         )
 customPer = widgets.BoundedIntText(
         value=10.0,
         min=-10.0,
         max=100,
-        description='Perception:',
-        layout=widgets.Layout(width='15%')
+        layout=widgets.Layout(min_width='20px')
         )
 def customTargetResponse(change):
     if customTarget.value:
@@ -161,7 +183,7 @@ attackBonus = widgets.BoundedIntText(
     max=10.0,
     step=1.0,
     description='Attack bonus:',
-    layout=widgets.Layout(width='auto')
+    layout=widgets.Layout(min_width='130px')
     #continuous_update=False
 )
 damageBonus = widgets.BoundedIntText(
@@ -170,7 +192,7 @@ damageBonus = widgets.BoundedIntText(
     max=50.0,
     step=1.0,
     description='Weakness:',
-    layout=widgets.Layout(width='auto')
+    layout=widgets.Layout(min_width='150px')
     #continuous_update=False
 )
 weakness = widgets.BoundedIntText(
@@ -179,7 +201,7 @@ weakness = widgets.BoundedIntText(
     max=50.0,
     step=1.0,
     description='Weakness:',
-    layout=widgets.Layout(width='auto')
+    layout=widgets.Layout(min_width='130px')
     #continuous_update=False
 )
 
@@ -189,13 +211,13 @@ persistentDamageWeightBox = widgets.BoundedFloatText(
     max=10.0,
     description='Persistent Damage Weight',
     disabled=False,
-    layout=widgets.Layout(width='auto')
+    layout=widgets.Layout(min_width='130px')
 )
 
 persistentDamageReroll = widgets.Checkbox(
-        value=False,
+        value=True,
         description="Reroll Persistent Damage Every time:",
-        layout=widgets.Layout(width='12%'),
+        layout=widgets.Layout(min_width='20px'),
         indent=False
 )
 
@@ -205,7 +227,7 @@ flatfootedBox = widgets.BoundedIntText(
     max=100.0,
     description='Flat-Footed %',
     disabled=False,
-    layout=widgets.Layout(width='14%')
+    layout=widgets.Layout(min_width='140px')
 )
 
 applyDebuffs = widgets.Checkbox(
@@ -229,6 +251,7 @@ clumsy = widgets.Dropdown(
              '4'],
     value='0',
     description='Clumsy:',
+    layout=widgets.Layout(min_width='20px')
 #    layout=widgets.Layout(width='17%')
 )
 drained = widgets.Dropdown(
@@ -239,6 +262,7 @@ drained = widgets.Dropdown(
              '4'],
     value='0',
     description='Drained:',
+    layout=widgets.Layout(min_width='20px')
 #    layout=widgets.Layout(width='17%')
 )
 enfeebled = widgets.Dropdown(
@@ -249,6 +273,7 @@ enfeebled = widgets.Dropdown(
              '4'],
     value='0',
     description='Enfeebled:',
+    layout=widgets.Layout(min_width='20px')
 #    layout=widgets.Layout(width='17%')
 )
 frightened = widgets.Dropdown(
@@ -259,6 +284,7 @@ frightened = widgets.Dropdown(
              '4'],
     value='0',
     description='Frightened:',
+    layout=widgets.Layout(min_width='20px')
 #    layout=widgets.Layout(width='17%')
 )
 sickened = widgets.Dropdown(
@@ -269,6 +295,7 @@ sickened = widgets.Dropdown(
              '4'],
     value='0',
     description='Sickened:',
+    layout=widgets.Layout(min_width='20px')
 #    layout=widgets.Layout(width='17%')
 )
 stupified = widgets.Dropdown(
@@ -279,6 +306,7 @@ stupified = widgets.Dropdown(
              '4'],
     value='0',
     description='Stupified:',
+    layout=widgets.Layout(min_width='20px')
 #    layout=widgets.Layout(width='17%')
 )
 
@@ -317,7 +345,8 @@ percentageView = widgets.Dropdown(
 
 byLevelView = widgets.Checkbox(
         value=False,
-        description="By Level View"
+        description="By Level View",
+        indent=False
 )
 
 levelSelector = widgets.IntSlider(
@@ -339,7 +368,12 @@ calculateButton = widgets.Button(description="Calculate!")
 def on_calculateButton_clicked(b):
     calculateGraph()
 calculateButton.on_click(on_calculateButton_clicked)
-
+autoCalculate = widgets.Checkbox(
+        value=True,
+        description="Autocalculate",
+        layout=widgets.Layout(min_width='20px'),
+        indent=False
+)
 
 abilityScoreOptions = ['10 No Boost',
                        '12 No Boost',
@@ -1324,13 +1358,14 @@ g.update_layout(title_text="Expected damage by level",
                   title_font_size=20,
                legend_orientation="h",
                legend_y=-0.2,
-               height=500
+               height=700
                )
 #g.layout.xaxis.range = [0,20]
 #g.layout.yaxis.range = [0,60]
 
 def updateEDBLGraph():
-    pass
+    if autoCalculate.value:
+        calculateGraph()
 def calculateGraph():
     global data
     CombinedAttack.PDWeight = persistentDamageWeightBox.value
@@ -1396,7 +1431,7 @@ def calculateGraph():
                                          
         
             # update legend size
-            g.update_layout(height=500+20*len(nameList))
+            g.update_layout(height=700+20*len(nameList))
         
             g.update_layout(title_text=titleText,
                             xaxis_title_text=xaxisText,
@@ -1527,7 +1562,7 @@ def calculateGraph():
             g.add_trace(go.Scatter(x=xLists[i],y=yLists[i],name=nameList[i]))
         
         # update legend size
-        g.update_layout(height=500+20*len(nameList))
+        g.update_layout(height=700+20*len(nameList))
         if byLevelView.value:
             g.update_layout(title_text=titleText,
                             xaxis_title_text=xaxisText,
@@ -1598,8 +1633,9 @@ classSelector.observe(classSelectorResponse, names="value")
 
 
 
-targetRow = widgets.HBox([levelDiff, targetACSelector, targetFortSelector, targetRefSelector,targetWillSelector, targetPerSelector])
-customRow = widgets.HBox([customTarget,customAC,customFort,customRef,customWill,customPer])
+targetRow = widgets.HBox([targetLabel,levelDiffLabel,levelDiff,ACLabel, targetACSelector, fortLabel, targetFortSelector, refLabel, targetRefSelector,willLabel, targetWillSelector, perLabel, targetPerSelector])
+targetRow.layout.width = '100%'
+customRow = widgets.HBox([customTarget,ACLabel,customAC,fortLabel,customFort,refLabel,customRef,willLabel,customWill,perLabel,customPer])
 debuffs = widgets.HBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
 adjustments = widgets.HBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox,persistentDamageReroll]) #weakness, applyDebuffs
 levelViewRow = widgets.HBox([percentageView,byLevelView,levelSelector,levelViewSelector])
@@ -1624,13 +1660,13 @@ ExpectedDamageByLevelWidget = widgets.VBox([targetRow,
                                             adjustments,
               levelViewRow,
               g,
-              calculateButton,
+              widgets.HBox([calculateButton,autoCalculate]),
              selectorRow,
              selectionsBox,
              printButtonRow,
              printBox])
             
-mtargetRow = widgets.VBox([levelDiff, targetACSelector, targetFortSelector, targetRefSelector,targetWillSelector, targetPerSelector])
+mtargetRow = widgets.VBox([targetLabel,levelDiffLabel,levelDiff,ACLabel, targetACSelector, fortLabel, targetFortSelector, refLabel, targetRefSelector,willLabel, targetWillSelector, perLabel, targetPerSelector])
 mcustomRow = widgets.VBox([customTarget,customAC,customFort,customRef,customWill,customPer])
 mdebuffs = widgets.VBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
 madjustments = widgets.VBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox,persistentDamageReroll]) #weakness, applyDebuffs
