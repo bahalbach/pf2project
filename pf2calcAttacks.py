@@ -583,22 +583,30 @@ for i in range(1,21):
         bombSplashDamage[i] = 3
     if i >= 17:
         bombSplashDamage[i] = 4
+sbombSplashDamage = {i: 1 for i in range(1,21)}
+for i in range(1,21):
+    if i >= 3:
+        bombSplashDamage[i] = 2
+    if i >= 13:
+        bombSplashDamage[i] = 3
+    if i >= 19:
+        bombSplashDamage[i] = 4
         
-bomberSplashDamage = copy.copy(bombSplashDamage)
-for i in range(4,21):
-    bomberSplashDamage[i] = mStr[i]
-    if i >= 10:
-        bomberSplashDamage[i] = mStr[i] + bombSplashDamage[i]
-    if i >= 17:
-        bomberSplashDamage[i] = mStr[i] + bombSplashDamage[i] - 1
+# bomberSplashDamage = copy.copy(bombSplashDamage)
+# for i in range(4,21):
+#     bomberSplashDamage[i] = mStr[i]
+#     if i >= 10:
+#         bomberSplashDamage[i] = mStr[i] + bombSplashDamage[i]
+#     if i >= 17:
+#         bomberSplashDamage[i] = mStr[i] + bombSplashDamage[i] - 1
         
-sbomberSplashDamage = copy.copy(bombSplashDamage)
-for i in range(4,21):
-    sbomberSplashDamage[i] = mStr[i]
-    if i >= 10:
-        sbomberSplashDamage[i] = mStr[i] + bombSplashDamage[i-2]
-    if i >= 17:
-        sbomberSplashDamage[i] = mStr[i] + bombSplashDamage[i-2] - 1
+# sbomberSplashDamage = copy.copy(bombSplashDamage)
+# for i in range(4,21):
+#     sbomberSplashDamage[i] = mStr[i]
+#     if i >= 10:
+#         sbomberSplashDamage[i] = mStr[i] + bombSplashDamage[i-2]
+#     if i >= 17:
+#         sbomberSplashDamage[i] = mStr[i] + bombSplashDamage[i-2] - 1
 
 pbombSplashDamage = {i: 0 for i in range(1,21)}
 for i in range(1,21):
@@ -609,9 +617,9 @@ for i in range(1,21):
     if i >= 17:
         pbombSplashDamage[i] = 3
 
-pbomberSplashDamage = copy.copy(bomberSplashDamage)
-for i in range(10,21):
-    pbomberSplashDamage[i] = bomberSplashDamage[i] - 1
+# pbomberSplashDamage = copy.copy(bomberSplashDamage)
+# for i in range(10,21):
+#     pbomberSplashDamage[i] = bomberSplashDamage[i] - 1
 
         
 acidFlaskDamage = {i: 1 for i in range(1,21)}
@@ -1110,6 +1118,7 @@ class Result:
         self.removeConcealment = False
         self.addHidden = False
         self.removeHidden = False
+        self.applyPersistentDamage = False
         
         self.addfirsthitdamage = 0
         self.addsecondhitdamage = 0 
@@ -1434,6 +1443,10 @@ class AtkSelection:
                     self.setBrutalCritical(feature[1])
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "Burn it!":
+                    self.setBurnIt(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+1 attack":
                     for i in self.attack:
                         if i >= feature[1]:
@@ -1711,7 +1724,7 @@ class AtkSelection:
         def getCriticalBonusDamageDice(self, level):
             d = []
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.critDamageDice:
                 for die in self.critDamageDice[level]:
                     d += [die]
@@ -1722,14 +1735,14 @@ class AtkSelection:
         
         def getPersistentDamage(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.persDamage:
                 return self.persDamage[level]
             return 0
         
         def getPersistentDamageDice(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.persDamageDice:
                 return self.persDamageDice[level]
             return []
@@ -1750,35 +1763,35 @@ class AtkSelection:
         
         def getSplashDamage(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.splashDamage:
                 return self.splashDamage[level]
             return 0
         
         def getCriticalPersistentDamage(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.critPersDamage:
                 return self.critPersDamage[level]
             return 0
         
         def getCriticalPersistentDamageDice(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.critPersDamageDice:
                 return self.critPersDamageDice[level]
             return []
         
         def getFFDamage(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.flatfootedDamage:
                 return self.flatfootedDamage[level]
             return 0
         
         def getFFDamageDice(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             if self.flatfootedDamageDice:
                 return self.flatfootedDamageDice[level]
             return []
@@ -1792,7 +1805,7 @@ class AtkSelection:
         
         def getFailureDamageDice(self, level):
             if self.isSpell:
-                    level = self.spellLevel(level)
+                level = self.spellLevel(level)
             failureDice = []
             if self.failureDamageDice:
                 failureDice += self.failureDamageDice[level]
@@ -1839,6 +1852,18 @@ class AtkSelection:
                 self.critDamageDice[i] += [self.damageDie]
                 self.persDamageType = Bleed
                 self.critPersDamageDice[i] += 2*[self.damageDie]
+        def setBurnIt(self, level):
+            if self.isSpell:
+                for i in range(level,21):
+                    slevel = self.spellLevel(i)
+                    bonus = sDice[slevel]
+                    bonus = max(1,int(bonus/2))
+                    self.damage[i] += bonus
+                    if self.persDamage[i] != 0 or self.persDamageDice[i] != []:
+                        self.persDamage[i] += 1
+                    if self.critPersDamage[i] != 0 or self.critPersDamageDice[i] != []:
+                        self.critPersDamage[i] += 1
+                
         def setFFonCrit(self, level):
             self.ffonCritLevel = min(level,self.ffonCritLevel)
         def setFFonSuccess(self, level):
@@ -2090,6 +2115,7 @@ class RangedStrike(Strike):
         return True
     def setSecondaryAS(self, score):
         return False
+
         
 class PropulsiveStrike(Strike):
     def __init__(self, attack, damage, csLevel=21):
@@ -2123,6 +2149,42 @@ class BombStrike(Strike):
         return True
     def setSecondaryAS(self, score):
         return False
+    
+    def setBurnIt(self, level):
+        for i in range(level,21):
+            bonus = len(self.weaponDamageDice[i])
+            bonus = max(1,(bonus-2)*2)
+            self.damage[i] += bonus
+            if self.persDamage[i] != 0 or self.persDamageDice[i] != []:
+                self.persDamage[i] += 1
+            if self.critPersDamage[i] != 0 or self.critPersDamageDice[i] != []:
+                self.critPersDamage[i] += 1
+            
+
+            
+class BomberStrike(BombStrike):
+    def __init__(self, attack, damage):
+        super().__init__(attack, damage)
+        self.prim = True
+        self.sec = True
+        self.damageScores = None
+        
+    def setPrimaryAS(self, score):
+        scoreValues = abilityScoreConverter[score]
+        self.addAttackBonuses(scoreValues)
+        return True
+    def setSecondaryAS(self, score):
+        scoreValues = abilityScoreConverter[score]
+        self.damageScore = scoreValues
+        return True
+        
+    def getSplashDamage(self, level):
+        splash = super().getSplashDamage(level)
+        if level >= 10:
+            splash = self.damageScore[level] + splash
+        elif level >= 4:
+            splash = max(self.damageScore[level],splash)
+        return splash
     
 class DBombStrike(RangedStrike):
     def __init__(self, attack):
@@ -2165,6 +2227,16 @@ class CantripStrike(Strike):
         return True
     def setSecondaryAS(self, score):
         return False
+    
+    def setBurnIt(self, level):
+        for i in range(level,21):
+            bonus = len(self.weaponDamageDice[i])
+            bonus = max(1,int((bonus)/2))
+            self.damage[i] += bonus
+            if self.persDamage[i] != 0 or self.persDamageDice[i] != []:
+                self.persDamage[i] += 1
+            if self.critPersDamage[i] != 0 or self.critPersDamageDice[i] != []:
+                self.critPersDamage[i] += 1
         
         
 class SpecialStrike(Strike):
@@ -2668,6 +2740,7 @@ class AttackSave(AtkSelection):
 class Effect(AtkSelection):
     def __init__(self):
         super().__init__(casterAttackBonus, noneDamage)
+        self.applyConcealment = False
         self.flatfootNextStrike = False
         self.flatfoot = False
         self.trueStrike = False
@@ -2747,6 +2820,7 @@ class Effect(AtkSelection):
 class AutoDamage(Effect):
     def __init__(self, damage):
         super().__init__()
+        self.applyConcealment = True
         self.damage = damage
         
     def effectResult(self, level, context):
@@ -2783,6 +2857,15 @@ class Quicksilver(Effect):
     def effectResult(self, level, context):
         r = Result(self,Distribution(),Distribution())
         r.setAttack = self.getAttack(level)
+        return r
+    
+class ApplyPersistentDamage(Effect):
+    def __init__(self):
+        super().__init__()
+        
+    def effectResult(self, level, context):
+        r = Result(self,Distribution(),Distribution())
+        r.applyPersistentDamage = True
         return r
     
 class CombinedAttack:
@@ -2864,29 +2947,29 @@ alchemistacids.persDamageDice = acidFlaskPersDamage
 alchemistacids.splashDamage = bombSplashDamage
 alchemistacids.persDamageType = Acid
 
-alchemistbacids = BombStrike(bombAttackBonus, alchemistRangedDamage)
+alchemistbacids = BomberStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbacids.isWeapon = False
 alchemistbacids.weaponDamage = acidFlaskDamage
 alchemistbacids.persDamageDice = acidFlaskPersDamage
 #alchemistbacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
-alchemistbacids.splashDamage = bomberSplashDamage
+alchemistbacids.splashDamage = bombSplashDamage
 alchemistbacids.persDamageType = Acid
 
-alchemistbsacids = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbsacids = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbsacids.isWeapon = False
 alchemistbsacids.weaponDamage = sacidFlaskDamage
 alchemistbsacids.persDamageDice = sacidFlaskPersDamage
 #alchemistbsacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
-alchemistbsacids.splashDamage = sbomberSplashDamage
+alchemistbsacids.splashDamage = sbombSplashDamage
 alchemistbsacids.stickybombLevel = 8
 alchemistbsacids.persDamageType = Acid
 
-alchemistbdacids = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdacids = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbdacids.isWeapon = False
 alchemistbdacids.weaponDamage = sacidFlaskDamage
 alchemistbdacids.persDamageDice = sacidFlaskPersDamage
 #alchemistbdacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
-alchemistbdacids.splashDamage = sbomberSplashDamage
+alchemistbdacids.splashDamage = sbombSplashDamage
 alchemistbdacids.persDamageType = Acid
 alchemistbdacids.ignoreNextonMiss = True
 
@@ -2898,29 +2981,29 @@ alchemistpacids.persDamageDice = pacidFlaskPersDamage
 alchemistpacids.splashDamage = pbombSplashDamage
 alchemistpacids.persDamageType = Acid
 
-alchemistbpacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpacids = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpacids.isWeapon = False
 alchemistbpacids.weaponDamage = pacidFlaskDamage
 alchemistbpacids.persDamageDice = pacidFlaskPersDamage
 #alchemistbpacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
-alchemistbpacids.splashDamage = pbomberSplashDamage
+alchemistbpacids.splashDamage = pbombSplashDamage
 alchemistbpacids.persDamageType = Acid
 
-alchemistbpsacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpsacids = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpsacids.isWeapon = False
 alchemistbpsacids.weaponDamage = pacidFlaskDamage
 alchemistbpsacids.persDamageDice = pacidFlaskPersDamage
 #alchemistbpsacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
-alchemistbpsacids.splashDamage = pbomberSplashDamage
+alchemistbpsacids.splashDamage = pbombSplashDamage
 alchemistbpsacids.stickybombLevel = 8
 alchemistbpsacids.persDamageType = Acid
 
-alchemistbpdacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdacids = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpdacids.isWeapon = False
 alchemistbpdacids.weaponDamage = pacidFlaskDamage
 alchemistbpdacids.persDamageDice = pacidFlaskPersDamage
 #alchemistbpsacids.critPersDamage = {i: pacidFlaskPersDamage[i]*2 for i in range(1,21)}
-alchemistbpdacids.splashDamage = pbomberSplashDamage
+alchemistbpdacids.splashDamage = pbombSplashDamage
 alchemistbpdacids.persDamageType = Acid
 alchemistbpdacids.ignoreNextonMiss = True
 
@@ -2932,29 +3015,29 @@ alchemistfires.persDamage = alchemistsFirePersDamage
 alchemistfires.splashDamage = bombSplashDamage
 alchemistfires.persDamageType = Fire
 
-alchemistbfires = BombStrike(bombAttackBonus, alchemistRangedDamage)
+alchemistbfires = BomberStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbfires.isWeapon = False
 alchemistbfires.weaponDamageDice = alchemistsFireDamage
 alchemistbfires.persDamage = alchemistsFirePersDamage
 #alchemistbfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
-alchemistbfires.splashDamage = bomberSplashDamage
+alchemistbfires.splashDamage = bombSplashDamage
 alchemistbfires.persDamageType = Fire
 
-alchemistbsfires = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbsfires = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbsfires.isWeapon = False
 alchemistbsfires.weaponDamageDice = salchemistsFireDamage
 alchemistbsfires.persDamage = salchemistsFirePersDamage
 #alchemistbsfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
-alchemistbsfires.splashDamage = sbomberSplashDamage
+alchemistbsfires.splashDamage = sbombSplashDamage
 alchemistbsfires.stickybombLevel = 8
 alchemistbsfires.persDamageType = Fire
 
-alchemistbdfires = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdfires = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbdfires.isWeapon = False
 alchemistbdfires.weaponDamageDice = salchemistsFireDamage
 alchemistbdfires.persDamage = salchemistsFirePersDamage
 #alchemistbdfires.critPersDamage = {i: alchemistsFirePersDamage[i]*2 for i in range(1,21)}
-alchemistbdfires.splashDamage = sbomberSplashDamage
+alchemistbdfires.splashDamage = sbombSplashDamage
 alchemistbdfires.persDamageType = Fire
 alchemistbdfires.ignoreNextonMiss = True
 
@@ -2966,29 +3049,29 @@ alchemistpfires.persDamage = palchemistsFirePersDamage
 alchemistpfires.splashDamage = pbombSplashDamage
 alchemistpfires.persDamageType = Fire
 
-alchemistbpfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpfires = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpfires.isWeapon = False
 alchemistbpfires.weaponDamageDice = palchemistsFireDamage
 alchemistbpfires.persDamage = palchemistsFirePersDamage
 #alchemistbpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
-alchemistbpfires.splashDamage = pbomberSplashDamage
+alchemistbpfires.splashDamage = pbombSplashDamage
 alchemistbpfires.persDamageType = Fire
 
-alchemistbpsfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpsfires = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpsfires.isWeapon = False
 alchemistbpsfires.weaponDamageDice = palchemistsFireDamage
 alchemistbpsfires.persDamage = palchemistsFirePersDamage
 #alchemistbpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
-alchemistbpsfires.splashDamage = pbomberSplashDamage
+alchemistbpsfires.splashDamage = pbombSplashDamage
 alchemistbpsfires.stickybombLevel = 8
 alchemistbpsfires.persDamageType = Fire
 
-alchemistbpdfires = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdfires = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpdfires.isWeapon = False
 alchemistbpdfires.weaponDamageDice = palchemistsFireDamage
 alchemistbpdfires.persDamage = palchemistsFirePersDamage
 #alchemistbpfires.critPersDamage = {i: palchemistsFirePersDamage[i]*2 for i in range(1,21)}
-alchemistbpdfires.splashDamage = pbomberSplashDamage
+alchemistbpdfires.splashDamage = pbombSplashDamage
 alchemistbpdfires.persDamageType = Fire
 alchemistbpdfires.ignoreNextonMiss = True
 
@@ -2997,22 +3080,22 @@ alchemistfrosts.isWeapon = False
 alchemistfrosts.weaponDamageDice = blfvDamage
 alchemistfrosts.splashDamage = bombSplashDamage
 
-alchemistbfrosts = BombStrike(bombAttackBonus, alchemistRangedDamage)
+alchemistbfrosts = BomberStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistbfrosts.isWeapon = False
 alchemistbfrosts.weaponDamageDice = blfvDamage
-alchemistbfrosts.splashDamage = bomberSplashDamage
+alchemistbfrosts.splashDamage = bombSplashDamage
 
-alchemistbsfrosts = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbsfrosts = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbsfrosts.isWeapon = False
 alchemistbsfrosts.weaponDamageDice = sblfvDamage
-alchemistbsfrosts.splashDamage = sbomberSplashDamage
+alchemistbsfrosts.splashDamage = sbombSplashDamage
 alchemistbsfrosts.stickybombLevel = 8
 alchemistbsfrosts.persDamageType = Cold
 
-alchemistbdfrosts = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdfrosts = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbdfrosts.isWeapon = False
 alchemistbdfrosts.weaponDamageDice = sblfvDamage
-alchemistbdfrosts.splashDamage = sbomberSplashDamage
+alchemistbdfrosts.splashDamage = sbombSplashDamage
 alchemistbdfrosts.persDamageType = Cold
 alchemistbdfrosts.ignoreNextonMiss = True
 
@@ -3021,22 +3104,22 @@ alchemistpfrosts.isWeapon = False
 alchemistpfrosts.weaponDamageDice = pblfvDamage
 alchemistpfrosts.splashDamage = pbombSplashDamage
 
-alchemistbpfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpfrosts = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpfrosts.isWeapon = False
 alchemistbpfrosts.weaponDamageDice = pblfvDamage
-alchemistbpfrosts.splashDamage = pbomberSplashDamage
+alchemistbpfrosts.splashDamage = pbombSplashDamage
 
-alchemistbpsfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpsfrosts = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpsfrosts.isWeapon = False
 alchemistbpsfrosts.weaponDamageDice = pblfvDamage
-alchemistbpsfrosts.splashDamage = pbomberSplashDamage
+alchemistbpsfrosts.splashDamage = pbombSplashDamage
 alchemistbpsfrosts.stickybombLevel = 8
 alchemistbpsfrosts.persDamageType = Cold
 
-alchemistbpdfrosts = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdfrosts = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpdfrosts.isWeapon = False
 alchemistbpdfrosts.weaponDamageDice = pblfvDamage
-alchemistbpdfrosts.splashDamage = pbomberSplashDamage
+alchemistbpdfrosts.splashDamage = pbombSplashDamage
 alchemistbpdfrosts.persDamageType = Cold
 alchemistbpdfrosts.ignoreNextonMiss = True
 
@@ -3047,28 +3130,28 @@ alchemistlightnings.setFFonSuccess(1)
 alchemistlightnings.weaponDamageDice = blfvDamage
 alchemistlightnings.splashDamage = bombSplashDamage
 
-alchemistblightnings = BombStrike(bombAttackBonus, alchemistRangedDamage)
+alchemistblightnings = BomberStrike(bombAttackBonus, alchemistRangedDamage)
 alchemistblightnings.isWeapon = False
 alchemistblightnings.setFFonCrit(1)
 alchemistblightnings.setFFonSuccess(1)
 alchemistblightnings.weaponDamageDice = blfvDamage
-alchemistblightnings.splashDamage = bomberSplashDamage
+alchemistblightnings.splashDamage = bombSplashDamage
 
-alchemistbslightnings = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbslightnings = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbslightnings.isWeapon = False
 alchemistbslightnings.setFFonCrit(1)
 alchemistbslightnings.setFFonSuccess(1)
 alchemistbslightnings.weaponDamageDice = sblfvDamage
-alchemistbslightnings.splashDamage = sbomberSplashDamage
+alchemistbslightnings.splashDamage = sbombSplashDamage
 alchemistbslightnings.stickybombLevel = 8
 alchemistbslightnings.persDamageType = Electricity
 
-alchemistbdlightnings = BombStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdlightnings = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
 alchemistbdlightnings.isWeapon = False
 alchemistbdlightnings.setFFonCrit(1)
 alchemistbdlightnings.setFFonSuccess(1)
 alchemistbdlightnings.weaponDamageDice = sblfvDamage
-alchemistbdlightnings.splashDamage = sbomberSplashDamage
+alchemistbdlightnings.splashDamage = sbombSplashDamage
 alchemistbdlightnings.persDamageType = Electricity
 alchemistbdlightnings.ignoreNextonMiss= True
 
@@ -3079,28 +3162,28 @@ alchemistplightnings.setFFonSuccess(1)
 alchemistplightnings.weaponDamageDice = pblfvDamage
 alchemistplightnings.splashDamage = pbombSplashDamage
 
-alchemistbplightnings = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbplightnings = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbplightnings.isWeapon = False
 alchemistbplightnings.setFFonCrit(1)
 alchemistbplightnings.setFFonSuccess(1)
 alchemistbplightnings.weaponDamageDice = pblfvDamage
-alchemistbplightnings.splashDamage = pbomberSplashDamage
+alchemistbplightnings.splashDamage = pbombSplashDamage
 
-alchemistbpslightnings = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpslightnings = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpslightnings.isWeapon = False
 alchemistbpslightnings.setFFonCrit(1)
 alchemistbpslightnings.setFFonSuccess(1)
 alchemistbpslightnings.weaponDamageDice = pblfvDamage
-alchemistbpslightnings.splashDamage = pbomberSplashDamage
+alchemistbpslightnings.splashDamage = pbombSplashDamage
 alchemistbpslightnings.stickybombLevel = 8
 alchemistbpslightnings.persDamageType = Electricity
 
-alchemistbpdlightnings = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdlightnings = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
 alchemistbpdlightnings.isWeapon = False
 alchemistbpdlightnings.setFFonCrit(1)
 alchemistbpdlightnings.setFFonSuccess(1)
 alchemistbpdlightnings.weaponDamageDice = pblfvDamage
-alchemistbpdlightnings.splashDamage = pbomberSplashDamage
+alchemistbpdlightnings.splashDamage = pbombSplashDamage
 alchemistbpdlightnings.persDamageType = Electricity
 alchemistbpdlightnings.ignoreNextonMiss
 
@@ -3625,11 +3708,14 @@ invisibility.addHidden = True
 removeConcealment = Effect()
 removeConcealment.removeConcealment = True
 
+applyPersistent = ApplyPersistentDamage()
+
 effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
                         'Flat Foot Next Strike': [flatfootnext],
                         'Blur': [blur],
                         'Invisibility':[invisibility],
-                        'Remove Concealment': [removeConcealment]}
+                        'Remove Concealment': [removeConcealment],
+                        'Apply Persistent Damage': [applyPersistent]}
 
 
 magicmissle = AutoDamage(magicMissleDamage)
@@ -3794,7 +3880,7 @@ grimtendrils.persDamage = spellDamage1
 grimtendrils.targetSave = Fort
 grimtendrils.persDamageType = Bleed
 
-wallfire = Effect()
+wallfire = AutoDamage(noneDamage)
 wallfire.isSpell = True
 wallfire.minSpellLevel = 4
 wallfire.weaponDamageDice = spellDamaged6

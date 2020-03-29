@@ -520,6 +520,8 @@ class Context:
             if self.concealment >= 20:
                 self.concealment = 20
                         
+        if result.applyPersistentDamage:
+            self.damageChances.applyPersistentDamage()
         if result.treatWorse:
             self.treatWorse = True
                     
@@ -758,6 +760,30 @@ class DamageChanceRecord:
         self.hits += damageChanceRecord.hits
         self.crits += damageChanceRecord.crits
         
+    def applyPersistentDamage(self):
+        newChances = self.chances
+        newDamages = self.damages
+        newPersDamages = self.persDamages
+        for i in range(len(self.chances)):
+            chance = (14) / 20
+            
+            self.damages[i].addDistributions(self.persDamages[i])
+            
+            newChance = self.chances[i] * (1 - chance)
+            self.chances[i] = self.chances[i] * chance
+            
+            newDamage = copy.deepcopy(self.damages[i])
+            newPersDamage = DistributionsByType()
+            
+            newChances.append(newChance)
+            newDamages.append(newDamage)
+            newPersDamages.append(newPersDamage)
+        self.chances = newChances
+        self.damages = newDamages
+        self.persDamages = newPersDamages
+            
+        
+        
     def getAverage(self):
         total = 0
         for i in range(len(self.chances)):
@@ -796,10 +822,11 @@ class DamageChanceRecord:
 class DamageChanceAverageRecord:
     def __init__(self):
         self.chance = 1
-        self.persChances = [1]
+        # self.persChances = [1]
 
         self.damage = 0
-        self.persDamages = [{}]
+        self.persDamages = {}
+        # dict of damage types with lists of chances and damages
 
         self.hits = 0
         self.crits = 0
@@ -809,8 +836,9 @@ class DamageChanceAverageRecord:
     
     def applyChance(self, chance):
         self.chance *= chance
-        for i in range(len(self.persChances)):
-            self.persChances[i] *= chance 
+        for dt in self.persDamages.keys():
+            for i in range(len(self.persDamages[dt][0])):
+                self.persDamages[dt][0][i] *= chance
         
     def add(self, dist, isHit, isCrit):
         self.damage += dist.getAverage()
@@ -827,35 +855,110 @@ class DamageChanceAverageRecord:
         ave = dist.getAverage()
         if(ave==0):
             return
-        for i in range(len(self.persDamages)):
-            if dist.type in self.persDamages[i]:
-                self.persDamages[i][dist.type] = max(ave, self.persDamages[i][dist.type])
-            else:
-                self.persDamages[i][dist.type] = ave
+        if dist.type in self.persDamages:
+            chances = self.persDamages[dist.type][0]
+            damages = self.persDamages[dist.type][1]
+            newChances = []
+            newDamages = []
+            sumChance = 0
+            for i in range(len(chances)):
+                if damages[i] <= ave:
+                    sumChance += chances[i]
+                else:
+                    newChances.append(chances[i])
+                    newDamages.append(damages[i])
+            newChances.append(sumChance)
+            newDamages.append(ave)
+            self.persDamages[dist.type] = (newChances,newDamages)
+            # make a new list of chances and damage averages
+            # first element is the sum of all chances for damages <= new average
+            # then add elements of chances for damages greater than average
+        else:
+            self.persDamages[dist.type] = ([self.chance],[ave])
+        # for i in range(len(self.persDamages)):
+        #     if dist.type in self.persDamages[i]:
+        #         self.persDamages[i][dist.type] = max(ave, self.persDamages[i][dist.type])
+        #     else:
+        #         self.persDamages[i][dist.type] = ave
 
 
     def addDamageChances(self, damageChanceRecord):
         weightedDamage = self.chance*self.damage + damageChanceRecord.chance*damageChanceRecord.damage
         weightedHits = self.chance*self.hits + damageChanceRecord.chance*damageChanceRecord.hits
         weightedCrits = self.chance*self.crits + damageChanceRecord.chance*damageChanceRecord.crits
+        
+        for dt in damageChanceRecord.persDamages:
+            if dt in self.persDamages:
+                chances = damageChanceRecord.persDamages[dt][0]
+                damages = damageChanceRecord.persDamages[dt][1]
+                selfChances = self.persDamages[dt][0]
+                selfDamages = self.persDamages[dt][1]
+                for i in range(len(chances)):
+                    if damages[i] in selfDamages:
+                        selfChances[selfDamages.index(damages[i])] += chances[i]
+                    else:
+                        selfChances.append(chances[i])
+                        selfDamages.append(damages[i])
+                self.persDamages[dt] = (selfChances,selfDamages)
+            else:
+                chances = damageChanceRecord.persDamages[dt][0]
+                damages = damageChanceRecord.persDamages[dt][1]
+                newChances = []
+                newDamages = []
+                zeroChance = self.chance
+                for i in range(len(chances)):
+                    if damages[i] == 0:
+                        zeroChance += chances[i]
+                    else:
+                        newChances.append(chances[i])
+                        newDamages.append(damages[i])
+                newChances.append(zeroChance)
+                newDamages.append(0)
+                self.persDamages[dt] = (newChances,newDamages)
+                
         self.chance += damageChanceRecord.chance 
         self.damage = weightedDamage / self.chance
         self.hits = weightedHits / self.chance
         self.crits = weightedCrits / self.chance
+                
+        #     chances = self.persDamages[dist.type][0]
+        #     damages = self.persDamages[dist.type][1]
         
-        for i in range(len(damageChanceRecord.persChances)):
-            newPersDict = damageChanceRecord.persDamages[i]
-            found = False
-            for ii in range(len(self.persChances)):
-                persDict = self.persDamages[ii]
-                if persDict == newPersDict:
-                    self.persChances[ii] += damageChanceRecord.persChances[i]
-                    found = True
-                    break
-            if not found:
-                self.persChances.append(damageChanceRecord.persChances[i])
-                self.persDamages.append(damageChanceRecord.persDamages[i])
+        # for i in range(len(damageChanceRecord.persChances)):
+        #     newPersDict = damageChanceRecord.persDamages[i]
+        #     found = False
+        #     for ii in range(len(self.persChances)):
+        #         persDict = self.persDamages[ii]
+        #         if persDict == newPersDict:
+        #             self.persChances[ii] += damageChanceRecord.persChances[i]
+        #             found = True
+        #             break
+        #     if not found:
+        #         self.persChances.append(damageChanceRecord.persChances[i])
+        #         self.persDamages.append(damageChanceRecord.persDamages[i])
 
+    def applyPersistentDamage(self):
+        chance = 14 / 20
+        for dt in self.persDamages:
+            selfChances = self.persDamages[dt][0]
+            selfDamages = self.persDamages[dt][1]
+            newChances = []
+            newDamages = []
+            zeroChance = 0
+            for i in range(len(selfChances)):
+                if selfDamages[i] == 0:
+                    zeroChance += selfChances[i]
+                else:
+                    zeroChance += selfChances[i] * (1 - chance)
+                    newChances.append(selfChances[i] * chance)
+                    newDamages.append(selfDamages[i])
+                    self.damage += selfChances[i] * selfDamages[i] / self.chance
+            newChances.append(zeroChance)
+            newDamages.append(0)
+            self.persDamages[dt] = (newChances,newDamages)
+        # for i in range(len(self.persChances)):
+        #     chance = self.persChances
+    
     def getAverage(self):
         return self.chance * self.damage
         # for i in range(len(self.chances)):
@@ -869,11 +972,19 @@ class DamageChanceAverageRecord:
     
     def getPersAverage(self):
         total = 0
-        for i in range(len(self.persChances)):
-            if Distribution.OnlyAverage:
-                ave = sum(self.persDamages[i].values())
-            chance = self.persChances[i]
-            total += ave * chance
+        # print(self.persDamages)
+        
+        for chanceDamage in self.persDamages.values():
+            chances = chanceDamage[0]
+            damages = chanceDamage[1]
+            for i in range(len(chances)):
+                total += chances[i] * damages[i]
+        
+        # for i in range(len(self.persChances)):
+        #     if Distribution.OnlyAverage:
+        #         ave = sum(self.persDamages[i].values())
+        #     chance = self.persChances[i]
+        #     total += ave * chance
         return total
     
     def getHits(self):
@@ -975,7 +1086,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
 #                
             elif(isinstance(atk, Effect)):
                 r = atk.effectResult(level, context)
-                if trueStrike:
+                if trueStrike or not atk.applyConcealment:
                     concealment = 0 
                 eContext = Context(context, (100-concealment)/100, r)
                 newContextList.append(eContext)
@@ -1177,7 +1288,7 @@ def graphChanceDebuff(routine, target, level, levelDiff, attackBonus, damageBonu
     
     return debuffList, chanceList
 	
-def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness):
+def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness, blend=False):
 #     print("c t")
     xLists = []
     yLists = []
@@ -1197,20 +1308,33 @@ def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness
         critsList = []
         debuffList = []
         for i in range(1,21):
-            toAdd = True
+            toAdd = target.contains(i+levelDiff)
+            if blend:
+                toAdd = target.contains(i+levelDiff-2) and target.contains(i+levelDiff+2)
             if(type(s) is CombinedAttack):
-                if s.contains(i) and target.contains(i+levelDiff):
+                if s.contains(i) and toAdd:
                     xList.append(i)
             else:
                 for st in s:  
-                    if not(st.getAttack(i) is not None and target.contains(i+levelDiff)):
+                    if (st.getAttack(i) is None):
                         toAdd = False
                 if toAdd:
                     xList.append(i) 
         for i in range(1,21): 
             if i in xList:
-                # reset damage and things like flat footed status             
-                y, py, hits, crits, debuffs = graphTrace(s, target, i, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus)
+                # reset damage and things like flat footed status  
+                if blend:
+                    y, py, hits, crits, debuffs = 0, 0, 0, 0, 0
+                    for pm in [-2,1,0,1,2]:
+                        ny, npy, nhits, ncrits, ndebuffs = graphTrace(s, target, i, levelDiff+pm, attackBonus, damageBonus, weakness, flatfootedStatus)
+                        y += ny
+                        py += npy
+                        hits += nhits
+                        crits += ncrits
+                        debuffs += ndebuffs
+                    y, py, hits, crits, debuffs = y/5, py/5, hits/5, crits/5, debuffs/5
+                else:
+                    y, py, hits, crits, debuffs = graphTrace(s, target, i, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus)
      
                 yList.append(y)
                 pyList.append(py)

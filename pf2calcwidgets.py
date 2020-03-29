@@ -343,6 +343,11 @@ percentageView = widgets.Dropdown(
         value='Expected Damage'
 )
 
+isBlended = widgets.Checkbox(
+    value = False,
+    description="Blend vs Level +-2",
+    indent=False)
+
 byLevelView = widgets.Checkbox(
         value=False,
         description="By Level View",
@@ -563,6 +568,7 @@ featureOptions = ["1d12 Rune",
                  "backswing",
                  "keen",
                  "Brutal Critical",
+                 "Burn it!",
                  "Add 1 Die",
                  "Remove 1 Die",
                  "+1 attack",
@@ -739,7 +745,8 @@ classSelector = widgets.Dropdown(
                  "Martial Strikes",
                  "Monster Strikes",
                  "Summon Strikes",
-                 "Effects"],
+                 "Effects",
+                 "Targets"],
         value="Fighter",
         layout=widgets.Layout(width='auto')
 )
@@ -918,7 +925,10 @@ effectOptions = ['Flat Foot Target',
                  'Flat Foot Next Strike',
                  'Blur',
                         'Invisibility',
-                        'Remove Concealment']
+                        'Remove Concealment',
+                        'Apply Persistent Damage']
+targetOptions = [
+    ]
 debuffSpellOptions = ['Heroism',
                       'Enfeeblement Attack',
                       'Enfeeblement Save',
@@ -1025,6 +1035,7 @@ selectionSwitcher = {"Alchemist": alchemistOptions,
                      "Monster Strikes": monsterOptions,
                      "Summon Strikes": summonOptions,
                      "Effects": effectOptions,
+                     "Targets": targetOptions,
                      "Spells": spellOptions,
                      "Skills": skillOptions,
                      "Basic Saves": basicSpellOptions,
@@ -1381,6 +1392,7 @@ def calculateGraph():
         targetText =" Target w/" + ac + fort + reflex + will + perception
     else:
         targetText = " Target w/ AC:" + str(targetACSelector.value) + " F:" + str(targetFortSelector.value) + " R:" + str(targetRefSelector.value)  + " W:" + str(targetWillSelector.value) + " P:" + str(targetPerSelector.value)
+    
     if byLevelView.value and (levelViewSelector.value == 'Damage Distribution' or levelViewSelector.value == 'Cumulative Distribution'):
         if percentageView.value == 'Expected Persistent Damage':
             displayPersistent = True
@@ -1457,7 +1469,10 @@ def calculateGraph():
                                             flatfootedBox.value, 
                                             attackBonus.value,
                                             damageBonus.value,
-                                            weakness.value)
+                                            weakness.value,
+                                            isBlended.value)
+        if isBlended.value:
+            targetText = " Blended" + targetText
         titleText="Vs lvl+" + str(levelDiff.value) + targetText
         xaxisText="Level"
 #     print("selected: ", xLists, yLists)
@@ -1610,6 +1625,7 @@ applyDebuffs.observe(edblResponse, names="value")
 flatfootedBox.observe(edblResponse, names="value")
 percentageView.observe(edblResponse, names="value")
 byLevelView.observe(edblResponse, names="value")
+isBlended.observe(edblResponse, names="value")
 levelSelector.observe(edblResponse, names="value")
 levelViewSelector.observe(edblResponse, names="value")
 persistentDamageWeightBox.observe(edblResponse, names="value")
@@ -1638,7 +1654,7 @@ targetRow.layout.width = '100%'
 customRow = widgets.HBox([customTarget,ACLabel,customAC,fortLabel,customFort,refLabel,customRef,willLabel,customWill,perLabel,customPer])
 debuffs = widgets.HBox([flatfootedBox,clumsy,drained,frightened,sickened,stupified])
 adjustments = widgets.HBox([enfeebled,attackBonus,damageBonus,persistentDamageWeightBox,persistentDamageReroll]) #weakness, applyDebuffs
-levelViewRow = widgets.HBox([percentageView,byLevelView,levelSelector,levelViewSelector])
+levelViewRow = widgets.HBox([percentageView,isBlended, byLevelView,levelSelector,levelViewSelector])
 
     # no ,mapSelection
 selectorModifiers = widgets.VBox([primaryAbilityScore,secondaryAbilityScore,attackModifier,damageModifier,additionalDamage,levelLimiter,spellLevelSelector,selectorAddButton])
