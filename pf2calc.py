@@ -842,8 +842,10 @@ class DamageChanceAverageRecord:
         
     def add(self, dist, isHit, isCrit):
         self.damage += dist.getAverage()
-        self.hits += 1
-        self.crits +=1
+        if isHit:
+            self.hits += 1
+        if isCrit:
+            self.crits += 1
         # for i in range(len(self.damages)):
         #     self.damages[i] += dist.getAverage()
   
