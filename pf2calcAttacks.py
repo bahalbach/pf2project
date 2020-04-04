@@ -586,11 +586,11 @@ for i in range(1,21):
 sbombSplashDamage = {i: 1 for i in range(1,21)}
 for i in range(1,21):
     if i >= 3:
-        bombSplashDamage[i] = 2
+        sbombSplashDamage[i] = 2
     if i >= 13:
-        bombSplashDamage[i] = 3
+        sbombSplashDamage[i] = 3
     if i >= 19:
-        bombSplashDamage[i] = 4
+        sbombSplashDamage[i] = 4
         
 # bomberSplashDamage = copy.copy(bombSplashDamage)
 # for i in range(4,21):
@@ -1901,6 +1901,11 @@ class Stitch:
                 return attack.getAttack(level)
         else:
             return None
+    def info(self):
+        string = "Stitch:\n"
+        for attack in self.attackList:
+            string += attack.info()
+        return string
         
 class Strike(AtkSelection):
     def __init__(self, attack, damage, isWeapon=True, csLevel=21):
@@ -2921,9 +2926,24 @@ class CombinedAttack:
 alchemistStrike = MeleeStrike(warpriestAttackBonus, alchemistDamage)
 alchemistRangedStrike = RangedStrike(warpriestAttackBonus, alchemistRangedDamage)
 
-quicksilverMutagen = Quicksilver(mutagenstrikeAttackBonus)
-quicksilverMutagenSpellAttack = Quicksilver(mutagenspellstrikeAttackBonus)
+quicksilverMutagenBomb = Quicksilver(mutagenstrikeAttackBonus)
+quicksilverMutagenWeapon = Effect()
+quicksilverMutagenWeapon.addAttack = {i: miBonus[i] - wiBonus[i] for i in range(1,21)}
+quicksilverMutagenSpellAttack = Effect()
+quicksilverMutagenSpellAttack.addAttack =  {i: miBonus[i] for i in range(1,21)}
 
+energyMutagenDice = {i: [d4] for i in range(1,21)}
+energyMutagenDice[1] = []
+energyMutagenDice[2] = []
+for i in energyMutagenDice:
+    if i >= 11:
+        energyMutagenDice[i] = [d6]
+    if i >= 17:
+        energyMutagenDice[i] = [d6,d6]
+energyMutagen = Effect()
+energyMutagen.addeveryhitdamageDice = energyMutagenDice
+
+{i: int(sDice[i]/3) for i in range(1,21)}
 energyDC = {i: 25 for i in range(11,21)}
 for i in range(17,21):
     energyDC[i] = 32
@@ -2939,7 +2959,35 @@ powerfulEnergyAttack.minL = 11
 powerfulEnergyAttack.weaponDamageDice = energyDamage
 powerfulEnergyAttack.isSpell = False
 
-alchemistacids = BombStrike(bombAttackBonus, alchemistRangedDamage)
+elixirLifeStatic = {i: 0 for i in range(1,21)}
+for i in elixirLifeStatic:
+    if i >= 5:
+        elixirLifeStatic[i] = 6
+    if i >= 9: 
+        elixirLifeStatic[i] = 12
+    if i >= 13:
+        elixirLifeStatic[i] = 18
+    if i >= 15:
+        elixirLifeStatic[i] = 21
+    if i >= 19:
+        elixirLifeStatic[i] = 27
+elixirLifeDice = {i: [d6] for i in range(1,21)}
+for i in elixirLifeDice:
+    if i >= 5:
+        elixirLifeDice[i] = 3*[d6]
+    if i >= 9: 
+        elixirLifeDice[i] = 5*[d6]
+    if i >= 13:
+        elixirLifeDice[i] = 7*[d6]
+    if i >= 15:
+        elixirLifeDice[i] = 8*[d6]
+    if i >= 19:
+        elixirLifeDice[i] = 10*[d6]
+elixirLife = AutoDamage(elixirLifeStatic)
+elixirLife.weaponDamageDice = elixirLifeDice
+
+alchemistAcidDamage = {i: alchemistRangedDamage[i]+1 for i in range(1,21)}
+alchemistacids = BombStrike(bombAttackBonus, alchemistAcidDamage)
 alchemistacids.isWeapon = False
 alchemistacids.weaponDamage = acidFlaskDamage
 alchemistacids.persDamageDice = acidFlaskPersDamage
@@ -2947,7 +2995,7 @@ alchemistacids.persDamageDice = acidFlaskPersDamage
 alchemistacids.splashDamage = bombSplashDamage
 alchemistacids.persDamageType = Acid
 
-alchemistbacids = BomberStrike(bombAttackBonus, alchemistRangedDamage)
+alchemistbacids = BomberStrike(bombAttackBonus, alchemistAcidDamage)
 alchemistbacids.isWeapon = False
 alchemistbacids.weaponDamage = acidFlaskDamage
 alchemistbacids.persDamageDice = acidFlaskPersDamage
@@ -2955,7 +3003,7 @@ alchemistbacids.persDamageDice = acidFlaskPersDamage
 alchemistbacids.splashDamage = bombSplashDamage
 alchemistbacids.persDamageType = Acid
 
-alchemistbsacids = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbsacids = BomberStrike(sbombAttackBonus, alchemistAcidDamage)
 alchemistbsacids.isWeapon = False
 alchemistbsacids.weaponDamage = sacidFlaskDamage
 alchemistbsacids.persDamageDice = sacidFlaskPersDamage
@@ -2964,7 +3012,7 @@ alchemistbsacids.splashDamage = sbombSplashDamage
 alchemistbsacids.stickybombLevel = 8
 alchemistbsacids.persDamageType = Acid
 
-alchemistbdacids = BomberStrike(sbombAttackBonus, alchemistRangedDamage)
+alchemistbdacids = BomberStrike(sbombAttackBonus, alchemistAcidDamage)
 alchemistbdacids.isWeapon = False
 alchemistbdacids.weaponDamage = sacidFlaskDamage
 alchemistbdacids.persDamageDice = sacidFlaskPersDamage
@@ -2973,7 +3021,7 @@ alchemistbdacids.splashDamage = sbombSplashDamage
 alchemistbdacids.persDamageType = Acid
 alchemistbdacids.ignoreNextonMiss = True
 
-alchemistpacids = BombStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistpacids = BombStrike(pbombAttackBonus, alchemistAcidDamage)
 alchemistpacids.isWeapon = False
 alchemistpacids.weaponDamage = pacidFlaskDamage
 alchemistpacids.persDamageDice = pacidFlaskPersDamage
@@ -2981,7 +3029,7 @@ alchemistpacids.persDamageDice = pacidFlaskPersDamage
 alchemistpacids.splashDamage = pbombSplashDamage
 alchemistpacids.persDamageType = Acid
 
-alchemistbpacids = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpacids = BomberStrike(pbombAttackBonus, alchemistAcidDamage)
 alchemistbpacids.isWeapon = False
 alchemistbpacids.weaponDamage = pacidFlaskDamage
 alchemistbpacids.persDamageDice = pacidFlaskPersDamage
@@ -2989,7 +3037,7 @@ alchemistbpacids.persDamageDice = pacidFlaskPersDamage
 alchemistbpacids.splashDamage = pbombSplashDamage
 alchemistbpacids.persDamageType = Acid
 
-alchemistbpsacids = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpsacids = BomberStrike(pbombAttackBonus, alchemistAcidDamage)
 alchemistbpsacids.isWeapon = False
 alchemistbpsacids.weaponDamage = pacidFlaskDamage
 alchemistbpsacids.persDamageDice = pacidFlaskPersDamage
@@ -2998,7 +3046,7 @@ alchemistbpsacids.splashDamage = pbombSplashDamage
 alchemistbpsacids.stickybombLevel = 8
 alchemistbpsacids.persDamageType = Acid
 
-alchemistbpdacids = BomberStrike(pbombAttackBonus, alchemistRangedDamage)
+alchemistbpdacids = BomberStrike(pbombAttackBonus, alchemistAcidDamage)
 alchemistbpdacids.isWeapon = False
 alchemistbpdacids.weaponDamage = pacidFlaskDamage
 alchemistbpdacids.persDamageDice = pacidFlaskPersDamage
@@ -3250,10 +3298,13 @@ debilitatingTrueDazzledSave.addConcealment = True
 
 alchemistAttackSwitcher = {'Alchemist Melee Strike': [alchemistStrike],
                     'Alchemist Ranged Strike': [alchemistRangedStrike],
-                    'Quicksilver Mutagen': [quicksilverMutagen],
-                    'Quicksilver Spell Attack': [quicksilverMutagenSpellAttack],
+                    'Quicksilver Mutagen': [quicksilverMutagenBomb],
+                    'Quicksilver Weapon Bonus': [quicksilverMutagenWeapon],
+                    'Quicksilver Spell Bonus': [quicksilverMutagenSpellAttack],
+                    'Energy Mutagen': [energyMutagen],
                     'Energy Mutagen Breath': [energyMutagenAttack],
                     'Powerful Energy Breath': [powerfulEnergyAttack],
+                    'Elixir of Life': [elixirLife],
                     'Alchemist Bestial Claw': [alchemistbestialClawStrike],
                     'Alchemist Bestial Jaw': [alchemistbestialJawStrike],
                     'Alchemist Feral Claw': [alchemistferalClawStrike],

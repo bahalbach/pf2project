@@ -179,8 +179,8 @@ def customTargetResponse(change):
 
 attackBonus = widgets.BoundedIntText(
     value=0.0,
-    min=-10.0,
-    max=10.0,
+    min=-20.0,
+    max=20.0,
     step=1.0,
     description='Attack bonus:',
     layout=widgets.Layout(min_width='130px')
@@ -188,8 +188,8 @@ attackBonus = widgets.BoundedIntText(
 )
 damageBonus = widgets.BoundedIntText(
     value=0.0,
-    min=-50.0,
-    max=50.0,
+    min=-100.0,
+    max=100.0,
     step=1.0,
     description='Weakness:',
     layout=widgets.Layout(min_width='150px')
@@ -197,8 +197,8 @@ damageBonus = widgets.BoundedIntText(
 )
 weakness = widgets.BoundedIntText(
     value=0.0,
-    min=-50.0,
-    max=50.0,
+    min=-100.0,
+    max=100.0,
     step=1.0,
     description='Weakness:',
     layout=widgets.Layout(min_width='130px')
@@ -453,8 +453,8 @@ weaponTraits = widgets.SelectMultiple(
 
 attackModifier = widgets.BoundedIntText(
     value=0.0,
-    min=-10.0,
-    max=10.0,
+    min=-20.0,
+    max=20.0,
     step=1.0,
     description='Attack Bonus:',
     layout=widgets.Layout(width='auto')
@@ -463,8 +463,8 @@ attackModifier = widgets.BoundedIntText(
 
 additionalDamage = widgets.BoundedIntText(
     value=0.0,
-    min=-50.0,
-    max=50.0,
+    min=-100.0,
+    max=100.0,
     step=1.0,
     description='Additional Damage:',
     layout=widgets.Layout(width='auto')
@@ -473,8 +473,8 @@ additionalDamage = widgets.BoundedIntText(
 
 damageModifier = widgets.BoundedIntText(
     value=0.0,
-    min=-50.0,
-    max=50.0,
+    min=-100.0,
+    max=100.0,
     step=1.0,
     description='Damage Bonus:',
     layout=widgets.Layout(width='auto')
@@ -753,13 +753,16 @@ classSelector = widgets.Dropdown(
 alchemistOptions = ['Alchemist Melee Strike',
                     'Alchemist Ranged Strike',
                     'Quicksilver Mutagen',
-                    'Quicksilver Spell Attack',
+                    'Quicksilver Weapon Bonus',
+                    'Quicksilver Spell Bonus',
                     'Alchemist Bestial Claw',
                     'Alchemist Bestial Jaw',
                     'Alchemist Feral Claw',
                     'Alchemist Feral Jaw',
+                    'Energy Mutagen',
                     'Energy Mutagen Breath',
                     'Powerful Energy Breath',
+                    'Elixir of Life',
                     'Alchemist Acid Flask',
                     'Alchemist Bomber Acid',
                     'Alchemist Sticky Acid',
@@ -1063,6 +1066,11 @@ selections = widgets.SelectMultiple(
     disabled=False
 )
 
+def selectionsChangedResponse(b):
+    if selections.value:
+        if len(selections.value) >= 1:
+            newNameBox.value = selections.value[0]
+
 selectorAddButton = widgets.Button(description="Add Selections")
 def on_addSelection_clicked(b):
     #add to selections
@@ -1167,38 +1175,41 @@ def on_combineSelection_clicked(b):
     if len(selections.value) == 1:
         name = selections.value[0]
         name += " + " + selections.value[0]
-        if not (name in selections.options):
-            value = selections.value[0]
-            Selector.doubleSelection(name, value)
-            selections.options += (name,)
+        while (name in selections.options):
+            name += "."
             
-            # remove parts from Selections
-            l = list(selections.options)  
-            Selector.removeSelection(value)
-            l.remove(value)
-            selections.options = l
-     
-            updateEDBLGraph()
+        value = selections.value[0]
+        Selector.doubleSelection(name, value)
+        selections.options += (name,)
+        
+        # remove parts from Selections
+        l = list(selections.options)  
+        Selector.removeSelection(value)
+        l.remove(value)
+        selections.options = l
+    
+        updateEDBLGraph()
             
     if len(selections.value) >1:
         name = selections.value[0]
         for i in range(len(selections.value)-1):
             name += " + " + selections.value[i+1]
             
-        if not (name in selections.options):
-            # add combination to Selections  
-            value = selections.value
-            Selector.combineSelections(name, value)
-            selections.options += (name,)
-            
-            # remove parts from Selections
-            l = list(selections.options)
-            for s in value:   
-                Selector.removeSelection(s)
-                l.remove(s)
-            selections.options = l
+        while (name in selections.options):
+            name += "."
+        # add combination to Selections  
+        value = selections.value
+        Selector.combineSelections(name, value)
+        selections.options += (name,)
+        
+        # remove parts from Selections
+        l = list(selections.options)
+        for s in value:   
+            Selector.removeSelection(s)
+            l.remove(s)
+        selections.options = l
      
-            updateEDBLGraph()
+        updateEDBLGraph()
 combineSelectionButton.on_click(on_combineSelection_clicked)
 
 stitchButton = widgets.Button(description="Stitch Selections")
@@ -1646,7 +1657,7 @@ sickened.observe(targetSickenedChangedResponse, names="value")
 stupified.observe(targetStupifiedChangedResponse, names="value")
 
 classSelector.observe(classSelectorResponse, names="value")
-
+selections.observe(selectionsChangedResponse, names="value")
 
 
 targetRow = widgets.HBox([targetLabel,levelDiffLabel,levelDiff,ACLabel, targetACSelector, fortLabel, targetFortSelector, refLabel, targetRefSelector,willLabel, targetWillSelector, perLabel, targetPerSelector])

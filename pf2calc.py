@@ -1327,14 +1327,14 @@ def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness
                 # reset damage and things like flat footed status  
                 if blend:
                     y, py, hits, crits, debuffs = 0, 0, 0, 0, 0
-                    for pm in [-2,1,0,1,2]:
+                    for pm, weight in [(-2,.25),(1,.75),(0, 1),(1,.75),(2,.25)]:
                         ny, npy, nhits, ncrits, ndebuffs = graphTrace(s, target, i, levelDiff+pm, attackBonus, damageBonus, weakness, flatfootedStatus)
-                        y += ny
-                        py += npy
-                        hits += nhits
-                        crits += ncrits
-                        debuffs += ndebuffs
-                    y, py, hits, crits, debuffs = y/5, py/5, hits/5, crits/5, debuffs/5
+                        y += ny * weight
+                        py += npy * weight
+                        hits += nhits * weight
+                        crits += ncrits * weight
+                        debuffs += ndebuffs * weight
+                    y, py, hits, crits, debuffs = y/3, py/3, hits/3, crits/3, debuffs/3
                 else:
                     y, py, hits, crits, debuffs = graphTrace(s, target, i, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus)
      

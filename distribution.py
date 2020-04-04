@@ -90,9 +90,26 @@ class Distribution:
             self.average *= multiplier
             return self
         
-        if multiplier < 1:
+        if multiplier == 0:
             self.dist = [1]
             self.minimum = 0
+            self.average= 0
+            return self
+        if multiplier < 1:
+            newDist = []
+            newMinimum = int(self.minimum*multiplier)
+            oldValue = newMinimum
+            for i, chance in enumerate(self.dist):
+                newValue = int((self.minimum+i)*multiplier)
+                if newValue == oldValue and len(newDist) >= 1:
+                    newDist[-1] += chance
+                else:
+                    newDist += [chance]
+                oldValue = newValue
+            self.dist = newDist
+            self.minimum = newMinimum
+            self.average = 0
+            return self
         if multiplier == 1:
             return self
 
