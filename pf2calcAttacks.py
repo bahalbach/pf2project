@@ -1262,6 +1262,7 @@ class AtkSelection:
             self.spellLevelModifier = 0
             self.minSpellLevel = 1
             self.constantSpellLevel = False
+            self.useMCSpellLevel = False
             
             self.doubleDamage = True
             self.doublePersDamage = True
@@ -1429,6 +1430,10 @@ class AtkSelection:
                         if i >= feature[1]:
                             if len(self.weaponDamageDice[i]) > 0:
                                 self.weaponDamageDice[i].pop()
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == 'MC Caster Proficiency':
+                    self.setMCCaster(feature[1])
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "backswing":
@@ -1675,12 +1680,16 @@ class AtkSelection:
                 elif slName == '10':
                     self.constantSpellLevel = True
                     self.spellLevelModifier = 10
+                elif slName == 'MC Max':
+                    self.useMCSpellLevel = True
+                    self.spellLevelModifier = 0
                 
             
         def getAttack(self, level):
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell and (sDice[level] + self.spellLevelModifier < self.minSpellLevel
-                                     or (self.constantSpellLevel and level < self.spellLevelModifier*2-1)):
+                                     or (self.constantSpellLevel and level < self.spellLevelModifier*2-1)
+                                     or (self.useMCSpellLevel and level<4)):
                     return None
                 if self.isSpell and self.fixedStrike:
                     level = level + self.spellLevelModifier*2
@@ -1874,15 +1883,49 @@ class AtkSelection:
         def setLevels(self, minl, maxl):
             self.minL = max(minl, self.minL)
             self.maxL = min(maxl, self.maxL)
+            
+        def setMCCaster(self, level):
+            for i in range(level, 21):
+                if i >= 19:
+                    self.attack[i] -= 2
+                elif i >= 18:
+                    pass
+                elif i >= 15:
+                    self.attack[i] -= 2
+                elif i >= 12:
+                    pass
+                elif i >= 7:
+                    self.attack[i] -= 2
         
         def spellLevel(self, level):
             if self.isSpell:
                 if self.constantSpellLevel:
                     level = self.spellLevelModifier*2
+                elif self.useMCSpellLevel:
+                    level = AtkSelection.getMCSpellLevel(level)
                 else:
                     level = level + self.spellLevelModifier*2
             return level
         
+        def getMCSpellLevel(level):
+            if level >= 20:
+                level = 16
+            elif level >= 18:
+                level = 14
+            elif level >= 16:
+                level = 12
+            elif level >= 14:
+                level = 10
+            elif level >= 12:
+                level = 8
+            elif level >= 8:
+                level = 6
+            elif level >= 6:
+                level = 4
+            elif level >= 4:
+                level = 2
+            return level
+                
         def info(self):
             return self.name + ": " + self.details
 class Stitch:
