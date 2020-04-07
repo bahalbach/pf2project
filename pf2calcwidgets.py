@@ -922,7 +922,13 @@ monsterOptions = ['Monster Extreme Attack High Damage',
                   'Monster Moderate Attack Low Damage',
                   'Monster Low Attack High Damage',
                   'Monster Low Attack Moderate Damage',
-                  'Monster Low Attack Low Damage'   
+                  'Monster Low Attack Low Damage',
+                  'Monster Extreme DC Limited Damage',
+                  'Monster Extreme DC Unlimited Damage',
+                  'Monster High DC Limited Damage',
+                  'Monster High DC Unlimited Damage',
+                  'Monster Moderate DC Limited Damage',
+                  'Monster Moderate DC Unlimited Damage'
                   ]
 summonOptions = ['Summon Animal',
                 'Summon Dragon']

@@ -5,7 +5,7 @@ Created on Thu Oct 10 15:18:59 2019
 @author: bhalb
 """
 import copy
-from pf2calcMonsterStats import creatureData
+from pf2calcMonster import creatureData
 from distribution import Distribution
 
 d4 = [1/4] * 4
@@ -2682,6 +2682,20 @@ class CantripSave(Save):
     def setSecondaryAS(self, score):
         return False
     
+class FixedSave(Save):
+    # don't use ability score
+    def __init__(self, dc, damage):
+        super().__init__(dc, damage) 
+        self.fixedStrike = True
+        self.isSpell = False
+        self.prim = False
+        self.sec = False
+        
+    def setPrimaryAS(self, score):
+        return False
+    def setSecondaryAS(self, score):
+        return False
+    
 class EnergySave(Save):
     def __init__(self, dc, damage):
         super().__init__(dc, damage)
@@ -3754,6 +3768,12 @@ damageHigh = creatureData['Damage']['High']
 damageModerate = creatureData['Damage']['Moderate']
 damageLow = creatureData['Damage']['Low']
 
+dcExtreme = creatureData['DC']['Extreme']
+dcHigh = creatureData['DC']['High']
+dcModerate = creatureData['DC']['Moderate']
+aoeLimited = creatureData['AoE']['Limited']
+aoeUnlimited = creatureData['AoE']['Unlimited']
+
 monsterEH = FixedStrike(attackExtreme,damageHigh)
 monsterEM = FixedStrike(attackExtreme,damageModerate)
 
@@ -3770,6 +3790,13 @@ monsterML = FixedStrike(attackModerate,damageLow)
 monsterLH = FixedStrike(attackLow,damageHigh)
 monsterLM = FixedStrike(attackLow,damageModerate)
 monsterLL = FixedStrike(attackLow,damageLow)
+
+monsterSEL = FixedSave(dcExtreme,aoeLimited)
+monsterSEU = FixedSave(dcExtreme,aoeUnlimited)
+monsterSHL = FixedSave(dcHigh,aoeLimited)
+monsterSHU = FixedSave(dcHigh,aoeUnlimited)
+monsterSML = FixedSave(dcModerate,aoeLimited)
+monsterSMU = FixedSave(dcModerate,aoeUnlimited)
     
 monsterAttackSwitcher = {'Monster Extreme Attack High Damage': [monsterEH],
                   'Monster Extreme Attack Moderate Damage': [monsterEM],
@@ -3783,7 +3810,13 @@ monsterAttackSwitcher = {'Monster Extreme Attack High Damage': [monsterEH],
                   'Monster Moderate Attack Low Damage': [monsterML],
                   'Monster Low Attack High Damage': [monsterLH],
                   'Monster Low Attack Moderate Damage': [monsterLM],
-                  'Monster Low Attack Low Damage': [monsterLL]   
+                  'Monster Low Attack Low Damage': [monsterLL],
+                  'Monster Extreme DC Limited Damage': [monsterSEL],
+                  'Monster Extreme DC Unlimited Damage': [monsterSEU],
+                  'Monster High DC Limited Damage': [monsterSHL],
+                  'Monster High DC Unlimited Damage': [monsterSHU],
+                  'Monster Moderate DC Limited Damage': [monsterSML],
+                  'Monster Moderate DC Unlimited Damage': [monsterSMU]
                   }
 
 #effects
