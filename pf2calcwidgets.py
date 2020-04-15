@@ -62,7 +62,8 @@ fortLabel = widgets.Label(
         layout=widgets.Layout(height='auto', min_width='15px')
 )
 targetFortSelector = widgets.Dropdown(
-    options=['Extreme',
+    options=['average bestiary',
+             'Extreme',
              'High',
              'Moderate',
              'Low',
@@ -75,7 +76,8 @@ refLabel = widgets.Label(
         layout=widgets.Layout(height='auto', min_width='15px')
 )
 targetRefSelector = widgets.Dropdown(
-    options=['Extreme',
+    options=['average bestiary',
+             'Extreme',
              'High',
              'Moderate',
              'Low',
@@ -88,7 +90,8 @@ willLabel = widgets.Label(
         layout=widgets.Layout(height='auto', min_width='15px')
 )
 targetWillSelector = widgets.Dropdown(
-    options=['Extreme',
+    options=['average bestiary',
+             'Extreme',
              'High',
              'Moderate',
              'Low',

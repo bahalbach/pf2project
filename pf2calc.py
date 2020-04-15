@@ -103,9 +103,79 @@ averageAcByLevel = {-1: 15,
  19: 44,
  20: 46}
 
+averageFortByLevel = {-1: 5,
+ 0: 6,
+ 1: 6,
+ 2: 8,
+ 3: 9,
+ 4: 11,
+ 5: 13,
+ 6: 16,
+ 7: 17,
+ 8: 18,
+ 9: 19,
+ 10: 21,
+ 11: 23,
+ 12: 23,
+ 13: 26,
+ 14: 28,
+ 15: 27,
+ 16: 30,
+ 17: 30,
+ 18: 33,
+ 19: 35,
+ 20: 37}
+
+averageRefByLevel = {-1: 7,
+ 0: 7,
+ 1: 8,
+ 2: 9,
+ 3: 9,
+ 4: 11,
+ 5: 12,
+ 6: 13,
+ 7: 15,
+ 8: 16,
+ 9: 17,
+ 10: 17,
+ 11: 20,
+ 12: 21,
+ 13: 21,
+ 14: 24,
+ 15: 26,
+ 16: 28,
+ 17: 29,
+ 18: 30,
+ 19: 32,
+ 20: 32}
+
+averageWillByLevel = {-1: 3,
+ 0: 4,
+ 1: 5,
+ 2: 6,
+ 3: 7,
+ 4: 10,
+ 5: 10,
+ 6: 13,
+ 7: 14,
+ 8: 15,
+ 9: 16,
+ 10: 18,
+ 11: 20,
+ 12: 21,
+ 13: 23,
+ 14: 24,
+ 15: 26,
+ 16: 28,
+ 17: 32,
+ 18: 32,
+ 19: 34,
+ 20: 35}
+
+
 
  
-averageTarget = Target(averageAcByLevel,None,None,None,None)
+averageTarget = Target(averageAcByLevel,averageFortByLevel,averageRefByLevel,averageWillByLevel,None)
 
 
 def critFailureChance(attackMinusAc):
@@ -200,11 +270,21 @@ class Selector:
     def changeTargetSaves(name):
         Selector.selectedTarget.setSaves(creatureData['Saves'][name])
     def changeTargetFort(name):
-        Selector.selectedTarget.setFort(creatureData['Saves'][name])
+        if name == 'average bestiary':
+            Selector.selectedTarget.setFort(averageFortByLevel)
+        else:
+            Selector.selectedTarget.setFort(creatureData['Saves'][name])
+        
     def changeTargetRef(name):
-        Selector.selectedTarget.setRef(creatureData['Saves'][name])
+        if name == 'average bestiary':
+            Selector.selectedTarget.setRef(averageRefByLevel)
+        else:
+            Selector.selectedTarget.setRef(creatureData['Saves'][name])
     def changeTargetWill(name):
-        Selector.selectedTarget.setWill(creatureData['Saves'][name])
+        if name == 'average bestiary':
+            Selector.selectedTarget.setWill(averageWillByLevel)
+        else:
+            Selector.selectedTarget.setWill(creatureData['Saves'][name])
     def changeTargetPer(name):
         Selector.selectedTarget.setPer(creatureData['Perception'][name])
     def changeTargetClumsy(name):
