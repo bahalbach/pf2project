@@ -561,10 +561,10 @@ class Context:
         self.thisStrikeBonus = oldContext.thisStrikeBonus
         self.thisDamageBonus = oldContext.thisDamageBonus
         
-        self.onFirstHitDamageDice = oldContext.onFirstHitDamageDice
-        self.onSecondHitDamageDice = oldContext.onSecondHitDamageDice
-        self.onThirdHitDamageDice = oldContext.onThirdHitDamageDice
-        self.onEveryHitDamageDice = oldContext.onEveryHitDamageDice
+        self.onFirstHitDamageDice = copy.deepcopy(oldContext.onFirstHitDamageDice)
+        self.onSecondHitDamageDice = copy.deepcopy(oldContext.onSecondHitDamageDice)
+        self.onThirdHitDamageDice = copy.deepcopy(oldContext.onThirdHitDamageDice)
+        self.onEveryHitDamageDice = copy.deepcopy(oldContext.onEveryHitDamageDice)
         
         if oldContext.didHit:
             self.onFirstHitDamageDice = self.onSecondHitDamageDice
