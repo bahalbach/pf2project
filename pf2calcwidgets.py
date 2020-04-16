@@ -751,6 +751,7 @@ classSelector = widgets.Dropdown(
                  "Monster Strikes",
                  "Summon Strikes",
                  "Effects",
+                 "Items",
                  "Targets"],
         value="Fighter",
         layout=widgets.Layout(width='auto')
@@ -895,7 +896,8 @@ fighterOptions = ['Fighter Melee Strike',
 martialstrikeOptions = ['Martial Strike',
                         'Martial Ranged Strike',
                         'Martial Propulsive']
-monkOptions = ['Martial Strike']
+monkOptions = ['Martial Strike',
+               'Ki Strike']
 rangerOptions = ['Ranger Precision Edge',
                  'Ranger Bear Support',
                  'Martial Strike',
@@ -908,7 +910,9 @@ sorcererOptions = ['Dangerous Sorcery',
                    'Caster Strike',
                    'Bespell Weapon']
 wizardOptions = ['Caster Strike',
-                 'Bespell Weapon']
+                 'Bespell Weapon',
+                 "Hand of the Apprentence",
+                 "Hand of the Apprentence +item"]
 animalcompanionOptions = ['Druid Bear',
                           'Druid Wolf',
                           'Ranger Bear',
@@ -1029,6 +1033,8 @@ skillOptions = ['Trained Feint',
                 'Trained Demoralize',
                 'Max Demoralize',
                 'Scare to Death']
+itemOptions = ['Study Shield Hardness',
+               'Sturdy Shield HP']
 
 selectionSwitcher = {"Alchemist": alchemistOptions, 
                      "Barbarian": barbarianOptions,
@@ -1054,7 +1060,8 @@ selectionSwitcher = {"Alchemist": alchemistOptions,
                      "Skills": skillOptions,
                      "Basic Saves": basicSpellOptions,
                      "Debuff Spells": debuffSpellOptions,
-                     "Focus Spells": focusSpellOptions}
+                     "Focus Spells": focusSpellOptions,
+                     "Items": itemOptions}
 
 
 selector = widgets.SelectMultiple(

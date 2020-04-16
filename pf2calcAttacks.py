@@ -496,6 +496,7 @@ alchDC = {i: acProf[i] + 10 for i in range(1,21)}
 fighterAttackBonus = {i: fProf[i]  + wiBonus[i] for i in range(1,21)}
 
 cantripAttackBonus = {i: sProf[i]  for i in range(1,21)}
+cantripAttackBonusItem = {i: wiBonus[i] + sProf[i]  for i in range(1,21)}
 spellDC = {i: 10 + cantripAttackBonus[i] for i in range(1,21)}
 warpriestDC = {i: 10 + wsProf[i] for i in range(1,21)}
 
@@ -3527,6 +3528,12 @@ rangerprecedge.addthirdhitdamageDice = rangerprecedgedamage3
 rangerbearsupport = Effect()
 rangerbearsupport.addeveryhitdamageDice = rangerbearsupportdamage
 
+kistrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+kistrike.runeDamageDice = {i: int((3+sDice[i])/4)*[d6] for i in range(1,21)}
+
+handapp = MeleeStrike(cantripAttackBonus, strCasterDamage, csLevel=1)
+handappitem = MeleeStrike(cantripAttackBonusItem, strCasterDamage, csLevel=1)
+
 bespellweapon = Effect()
 bespellweapon.addeveryhitdamageDice = {i: [d6] for i in range(1,21)}
 
@@ -3603,6 +3610,9 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
                        'Ranger Precision Edge': [rangerprecedge],
                        'Ranger Bear Support': [rangerbearsupport],
                        'Bespell Weapon': [bespellweapon],
+                       'Ki Strike': [kistrike],
+                       "Hand of the Apprentence": [handapp],
+                       "Hand of the Apprentence +item": [handappitem],
                        'Wildshape Animal': [druidanimalform],
                 'Wildshape Insect': [druidinsectform],
                 'Wildshape Dino': [druiddinoform],
@@ -4292,7 +4302,40 @@ skillAttackSwitcher = {
         'Max Demoralize': [maxdemoralize],
         'Scare to Death': [scaretodeath]
         }
+shardness = {i: 5 for i in range(1,21)}
+for i in shardness:
+    if i >= 4:
+        shardness[i] = 8
+    if i >= 7:
+        shardness[i] = 10
+    if i >= 10:
+        shardness[i] = 13
+    if i >= 13:
+        shardness[i] = 15
+    if i >= 16:
+        shardness[i] = 17
+    if i >= 19:
+        shardness[i] = 20
+shp = {i: 20 for i in range(1,21)}
+for i in shp:
+    if i >= 4:
+        shp[i] = 64
+    if i >= 7:
+        shp[i] = 80
+    if i >= 10:
+        shp[i] = 104
+    if i >= 13:
+        shp[i] = 120
+    if i >= 16:
+        shp[i] = 136
+    if i >= 19:
+        shp[i] = 160
+studyhardness = AutoDamage(shardness)
+studyhp = AutoDamage(shp)
 
+itemSwitcher = {
+    'Study Shield Hardness': [studyhardness],
+    'Sturdy Shield HP': [studyhp]}
 
 attackSwitcher = {**alchemistAttackSwitcher,
                   **barbarianAttackSwitcher,
@@ -4305,4 +4348,5 @@ attackSwitcher = {**alchemistAttackSwitcher,
                   **effectAttackSwitcher,
                   **spellAttackSwitcher,
                   **focusSpellAttackSwitcher,
-                  **skillAttackSwitcher}
+                  **skillAttackSwitcher,
+                  **itemSwitcher}
