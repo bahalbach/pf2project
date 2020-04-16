@@ -1085,7 +1085,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
     oContext.frightened = target.frightened
     oContext.sickened = target.sickened
     oContext.stupified = target.stupified
-    if (1-flatfootedStatus) != 0:
+    if (100-flatfootedStatus) != 0:
         normalContext = Context(oContext, 1-flatfootedStatus/100,None)
         if flatfootedStatus != 0:
             ffContext = Context(oContext, flatfootedStatus/100, None)
@@ -1094,7 +1094,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
         else:
             contextList = [normalContext]
     else:
-        ffContext = Context(oContext, flatfootedStatus/100, None)
+        ffContext = Context(oContext, 1, None)
         ffContext.setFlatfooted()
         contextList = [ffContext]
 
