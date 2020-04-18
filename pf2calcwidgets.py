@@ -605,7 +605,9 @@ featureOptions = ["1d12 Rune",
                  "-7 damage",
                  "-8 damage",
                  "-9 damage",
-                 "-10 damage"
+                 "-10 damage",
+                 "+1 level",
+                 "-1 level"
                  ]
 
 featureSelection1 = widgets.Dropdown(

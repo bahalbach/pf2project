@@ -1316,6 +1316,7 @@ class AtkSelection:
             
             self.minL = 1
             self.maxL = 20
+            self.levelAdjustment = {i: 0 for i in range(1,21)}
         def getAttackObject(self,level):
             return self
             
@@ -1451,6 +1452,14 @@ class AtkSelection:
                         self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "Burn it!":
                     self.setBurnIt(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "+1 level":
+                    self.adjustLevels(feature[1],1)
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "-1 level":
+                    self.adjustLevels(feature[1],-1)
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "+1 attack":
@@ -1687,6 +1696,7 @@ class AtkSelection:
                 
             
         def getAttack(self, level):
+            level = level + self.levelAdjustment[level]
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell and (sDice[level] + self.spellLevelModifier < self.minSpellLevel
                                      or (self.constantSpellLevel and level < self.spellLevelModifier*2-1)
@@ -1698,6 +1708,7 @@ class AtkSelection:
             return None
         
         def getDamageBonus(self, level):
+            level = level + self.levelAdjustment[level]
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell:
                     level = self.spellLevel(level)
@@ -1708,6 +1719,7 @@ class AtkSelection:
             return 0
         
         def getDamageDice(self, level, crit=False):
+            level = level + self.levelAdjustment[level]
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell:
                     level = self.spellLevel(level)
@@ -1725,6 +1737,7 @@ class AtkSelection:
             return []
                 
         def getCriticalBonusDamage(self, level):
+            level = level + self.levelAdjustment[level]
             if self.critDamage:
                 if self.isSpell:
                     level = self.spellLevel(level)
@@ -1732,6 +1745,7 @@ class AtkSelection:
             return 0
         
         def getCriticalBonusDamageDice(self, level):
+            level = level + self.levelAdjustment[level]
             d = []
             if self.isSpell:
                 level = self.spellLevel(level)
@@ -1744,6 +1758,7 @@ class AtkSelection:
             return d
         
         def getPersistentDamage(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.persDamage:
@@ -1751,6 +1766,7 @@ class AtkSelection:
             return 0
         
         def getPersistentDamageDice(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.persDamageDice:
@@ -1772,6 +1788,7 @@ class AtkSelection:
 #            return []
         
         def getSplashDamage(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.splashDamage:
@@ -1779,6 +1796,7 @@ class AtkSelection:
             return 0
         
         def getCriticalPersistentDamage(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.critPersDamage:
@@ -1786,6 +1804,7 @@ class AtkSelection:
             return 0
         
         def getCriticalPersistentDamageDice(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.critPersDamageDice:
@@ -1793,6 +1812,7 @@ class AtkSelection:
             return []
         
         def getFFDamage(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.flatfootedDamage:
@@ -1800,6 +1820,7 @@ class AtkSelection:
             return 0
         
         def getFFDamageDice(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.flatfootedDamageDice:
@@ -1814,6 +1835,7 @@ class AtkSelection:
 #            return 0
         
         def getFailureDamageDice(self, level):
+            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             failureDice = []
@@ -1825,23 +1847,28 @@ class AtkSelection:
 
         
         def getKeen(self, level):
+            level = level + self.levelAdjustment[level]
             if level >= self.keenLevel:
                 return True
             return False
         def getBackswing(self, level):
+            level = level + self.levelAdjustment[level]
             if level >= self.backswingLevel:
                 return True
             return False
         
         def ffonCrit(self, level):
+            level = level + self.levelAdjustment[level]
             if level >= self.ffonCritLevel:
                 return True
             return False
         def ffonSuccess(self, level):
+            level = level + self.levelAdjustment[level]
             if level >= self.ffonSuccessLevel:
                 return True
             return False
         def ffonFail(self, level):
+            level = level + self.levelAdjustment[level]
             if level >= self.ffonFailLevel:
                 return True
             return False
@@ -1881,6 +1908,10 @@ class AtkSelection:
         def setFFonFail(self, level):
             self.ffonFailLevel = min(level,self.ffonFailLevel)
             
+        def adjustLevels(self, startLevel, amount):
+            for i in self.levelAdjustment:
+                if i >= startLevel:
+                    self.levelAdjustment[i] += amount
         def setLevels(self, minl, maxl):
             self.minL = max(minl, self.minL)
             self.maxL = min(maxl, self.maxL)
