@@ -19,13 +19,14 @@ d12 = [1/12] * 12
 
 class Distribution:
     OnlyAverage = False
+    NoCalculation = False
     ConvolutionDict = {}
     ConvolutionDiceDict = {}
     count = 0
     def __init__(self,dice=[],static=0,damageType=None):
         self.dist = [1]
         self.minimum = 0
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average = 0
         else:
             self.average = None
@@ -38,7 +39,7 @@ class Distribution:
         if not self.average is None:
             return self.average
         self.average = 0
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("No average")
         for i, chance in enumerate(self.dist):
             self.average += chance * (i + self.minimum)
@@ -46,7 +47,7 @@ class Distribution:
         return self.average
     
     def halve(self):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average /= 2
             return self
         
@@ -86,7 +87,7 @@ class Distribution:
         
     
     def multiply(self, multiplier):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average *= multiplier
             return self
         
@@ -133,7 +134,7 @@ class Distribution:
         return self
             
     def add(self, dice, static):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average += static
             for die in dice:
                 self.average += (len(die)+1)/2
@@ -156,7 +157,7 @@ class Distribution:
         return self
     
     def addBonus(self, static):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average += static
             if self.average > 0:
                 self.average = max(self.average,1)
@@ -174,7 +175,7 @@ class Distribution:
             self.minimum += static
         self.average = None
     def addWeakness(self, static):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average += static
             self.average = max(self.average,0)
             return self
@@ -192,7 +193,7 @@ class Distribution:
         self.average = None
             
     def combine(self,d2):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             self.average += d2.average
             return self
         
@@ -207,16 +208,16 @@ class Distribution:
             
     
     def minimum(self):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no min")
         return self.minimum
     def maximum(self):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no max")
         return self.minimum + len(self.dist) - 1
     
     def chanceLessThanOrEqualTo(self, number):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no chance")
         if number < self.minimum:
             return 0
@@ -226,7 +227,7 @@ class Distribution:
             return sum(self.dist[0:(number-self.minimum+1)])
         
     def combineMax(self, d2):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no combine")
         d1 = self
         minimum = max(d1.minimum,d2.minimum)
@@ -244,7 +245,7 @@ class Distribution:
         self.average = None
         
     def selectMax(self, d2):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             if d2.average > self.average:
                 self.average = d2.average
             return self
@@ -255,13 +256,13 @@ class Distribution:
         self.average = None
         
     def generate(self):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no generate")
         for d, chance in enumerate(self.dist):
             yield d + self.minimum, chance
             
     def Combine(d1, d2):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no combine")
         newDist = Distribution([],0)
         newDist.dist = Distribution.Convolve(d1.dist,d2.dist)
@@ -270,7 +271,7 @@ class Distribution:
     
     def Convolve(a1, a2):
         # unhashable type: 'list'
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no convolve")
         return numpy.convolve(a1, a2)
         key = (*a1,*a2)
@@ -284,7 +285,7 @@ class Distribution:
             return c
         
     def ConvolveDice(dist, dice):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no convolve")
         for die in dice:
             dist = numpy.convolve(dist,die)
@@ -309,7 +310,7 @@ class Distribution:
             return dist
         
     def ShiftDown(dist, num):
-        if Distribution.OnlyAverage:
+        if Distribution.NoCalculation:
             raise Exception("no shift")
         newDist = [0]
         for i in range(len(dist)):

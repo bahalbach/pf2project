@@ -504,6 +504,12 @@ class Context:
         self.debuffAttack = 0
         
         self.damageBonus = 0
+        
+        self.targetAC = None
+        self.targetFort = None
+        self.targetRef = None
+        self.targetWill = None
+        self.targetPer = None
 
         if Distribution.OnlyAverage:
             self.damageChances = DamageChanceAverageRecord()
@@ -554,6 +560,12 @@ class Context:
             
         self.damageBonus = oldContext.damageBonus
         
+        self.targetAC = oldContext.targetAC
+        self.targetFort = oldContext.targetFort
+        self.targetRef = oldContext.targetRef
+        self.targetWill = oldContext.targetWill
+        self.targetPer = oldContext.targetPer
+        
         self.damageChances = copy.deepcopy(oldContext.damageChances)
         # self.persChances = copy.deepcopy(oldContext.persChances)
         self.applyChance(chance)
@@ -576,6 +588,17 @@ class Context:
             self.thisDamageBonus = 0
         self.usedDamage = False
     def processResult(self, result):
+        if result.targetAC:
+            self.targetAC = result.targetAC
+        if result.targetFort:
+            self.targetFort = result.targetFort
+        if result.targetRef:
+            self.targetRef = result.targetRef
+        if result.targetWill:
+            self.targetWill = result.targetWill
+        if result.targetPer:
+            self.targetPer = result.targetPer
+            
         if result.futureAttacksFF:
             self.origffstatus = True
             self.flatfooted = True
@@ -1101,6 +1124,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
     
     for atk in routine: #for each strike in that routine
         atk = atk.getAttackObject(level)
+        attackLevel = atk.attackLevel(level)
         newContextList = []
         for context in contextList:
             # calculate the effects for this attack
@@ -1114,51 +1138,76 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 concealment = 0
             if(isinstance(atk, Strike)):
                 if context.setAttack is None:
-                    totalBonus = atk.getAttack(level)
+                    totalBonus = atk.getAttack(attackLevel)
                 else:
                     totalBonus = context.setAttack
                     context.setAttack = None
                 totalBonus += context.getStrikeBonus(atk.isSpell)
-                keenStatus = atk.getKeen(level)
+                keenStatus = atk.getKeen(attackLevel)
                 trueStrike = context.hasTrueStrike()
                 
                 totalDC = target.getAC(level+levelDiff) + context.getACBonus()
-            
+                if context.targetAC:
+                        totalDC = context.targetAC
                 if context.flatfooted:
                     totalDC -= 2
             elif(isinstance(atk,SaveAttack)):
-                totalBonus = atk.getAttack(level)
+                totalBonus = atk.getAttack(attackLevel)
                 totalBonus += context.getSaveAttackBonus()
-                keenStatus = atk.getKeen(level)
+                keenStatus = atk.getKeen(attackLevel)
                 
                 trueStrike = context.hasTrueStrike()
             
-                totalDC = 10 + target.getSaves(level+levelDiff) 
+                # totalDC = 10 + target.getSaves(level+levelDiff,atk.targetSave) 
                 if atk.targetSave == Fort:
+                    totalDC = 10 + target.getFort(level+levelDiff)
+                    if context.targetFort:
+                        totalDC = 10 + context.targetFort
                     totalDC += context.getFortBonus()
                 if atk.targetSave == Reflex:
+                    totalDC = 10 + target.getRef(level+levelDiff)
+                    if context.targetRef:
+                        totalDC = 10 + context.targetRef
                     totalDC += context.getRefBonus()
                 if atk.targetSave == Will:
+                    totalDC = 10 + target.getWill(level+levelDiff)
+                    if context.targetWill:
+                        totalDC = 10 + context.targetWill
                     totalDC += context.getWillBonus()
                 if atk.targetSave == Perception:
+                    totalDC = 10 + target.getPer(level+levelDiff)
+                    if context.targetPer:
+                        totalDC = 10 + context.targetPer
                     totalDC += context.getPerBonus()
             elif(isinstance(atk, Save)):
-                totalBonus = target.getSaves(level+levelDiff)
+                # totalBonus = target.getSaves(level+levelDiff)
                 if atk.targetSave == Fort:
+                    totalBonus = target.getFort(level+levelDiff)
+                    if context.targetFort:
+                        totalBonus = context.targetFort
                     totalBonus += context.getFortBonus()
                 if atk.targetSave == Reflex:
+                    totalBonus = target.getRef(level+levelDiff)
+                    if context.targetRef:
+                        totalBonus = context.targetRef
                     totalBonus += context.getRefBonus()
                 if atk.targetSave == Will:
+                    totalBonus = target.getWill(level+levelDiff)
+                    if context.targetWill:
+                        totalBonus = context.targetWill
                     totalBonus += context.getWillBonus()
                 if atk.targetSave == Perception:
+                    totalBonus = target.getPer(level+levelDiff)
+                    if context.targetPer:
+                        totalBonus = context.targetPer
                     totalBonus += context.getPerBonus()
                 
-                totalDC = atk.getDC(level)
+                totalDC = atk.getDC(attackLevel)
                 totalDC += context.getDCBonus()
 #            elif(isinstance(atk, AttackSave)):
-#                totalBonus = atk.getAttack(level)
+#                totalBonus = atk.getAttack(attackLevel)
 #                totalBonus += context.getStrikeBonus()
-#                keenStatus = atk.getKeen(level)
+#                keenStatus = atk.getKeen(attackLevel)
 #                trueStrike = context.hasTrueStrike()
 #                
 #                totalDC = target.getAC(level+levelDiff) + context.getACBonus()
@@ -1167,7 +1216,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
 #                    
 #                
             elif(isinstance(atk, Effect)):
-                r = atk.effectResult(level, context)
+                r = atk.effectResult(attackLevel, context)
                 if trueStrike or not atk.applyConcealment:
                     concealment = 0 
                 eContext = Context(context, (100-concealment)/100, r)
@@ -1215,28 +1264,28 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 newContextList.append(ignoreContext)
             else:
                 if critSuccessPercent != 0:
-                    critSuccessResult = atk.critSuccessResult(level, context)
+                    critSuccessResult = atk.critSuccessResult(attackLevel, context)
                     csContext = Context(copy.copy(context), critSuccessPercent/100, critSuccessResult)
                     newContextList.append(csContext)
             
                 if successPercent != 0:
-                    successResult = atk.successResult(level, context)
+                    successResult = atk.successResult(attackLevel, context)
                     sContext = Context(context, successPercent/100, successResult)
                     newContextList.append(sContext)
                 
                 if failurePercent != 0:
-                    failureResult = atk.failureResult(level, context)
+                    failureResult = atk.failureResult(attackLevel, context)
                     fContext = Context(context, failurePercent/100, failureResult)
                     newContextList.append(fContext)
             
                 if critFailurePercent != 0:
-                    critFailureResult = atk.critFailureResult(level, context)
+                    critFailureResult = atk.critFailureResult(attackLevel, context)
                     cfContext = Context(context, critFailurePercent/100, critFailureResult)
                     newContextList.append(cfContext) 
                 
                 if noEffectPercent != 0:
                     neContext = Context(context, noEffectPercent/100, None)
-                    if atk.backswingLevel <= level:
+                    if atk.backswingLevel <= attackLevel:
                         neContext.thisStrikeBonus += 1
                     newContextList.append(neContext) 
                 
@@ -1398,7 +1447,7 @@ def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness
                     xList.append(i)
             else:
                 for st in s:  
-                    if (st.getAttack(i) is None):
+                    if (st.getAttack(st.attackLevel(i)) is None):
                         toAdd = False
                 if toAdd:
                     xList.append(i) 
@@ -1464,7 +1513,7 @@ def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, wea
                     toAdd = False
         else:
             for st in s:  
-                if not(st.getAttack(level) ):
+                if not(st.getAttack(st.attackLevel(level)) ):
                     toAdd = False
         
         if toAdd:
@@ -1510,7 +1559,7 @@ def createDamageDistribution(levelDiff, flatfootedStatus, attackBonus, damageBon
                     toAdd = False
         else:
             for st in s:  
-                if not(st.getAttack(level) ):
+                if not(st.getAttack(st.attackLevel(level)) ):
                     toAdd = False
         
         if toAdd:
@@ -1544,7 +1593,7 @@ def createDebuffDistribution(levelDiff, flatfootedStatus, attackBonus, damageBon
                     toAdd = False
         else:
             for st in s:  
-                if not(st.getAttack(level) ):
+                if not(st.getAttack(st.attackLevel(level)) ):
                     toAdd = False
         
         if toAdd:

@@ -1160,6 +1160,12 @@ class Result:
         self.good = False
         self.veryGood = False
         
+        self.targetAC = None
+        self.targetFort = None
+        self.targetRef = None
+        self.targetWill = None
+        self.targetPer = None
+        
     def setFutureAttacksFF(self):
         self.futureAttacksFF = True
     def setNextAttackFF(self):
@@ -1316,7 +1322,7 @@ class AtkSelection:
             
             self.minL = 1
             self.maxL = 20
-            self.levelAdjustment = {i: 0 for i in range(1,21)}
+            self.levelAdjustment = {i: 0 for i in range(-1,24)}
         def getAttackObject(self,level):
             return self
             
@@ -1696,7 +1702,6 @@ class AtkSelection:
                 
             
         def getAttack(self, level):
-            level = level + self.levelAdjustment[level]
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell and (sDice[level] + self.spellLevelModifier < self.minSpellLevel
                                      or (self.constantSpellLevel and level < self.spellLevelModifier*2-1)
@@ -1708,7 +1713,6 @@ class AtkSelection:
             return None
         
         def getDamageBonus(self, level):
-            level = level + self.levelAdjustment[level]
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell:
                     level = self.spellLevel(level)
@@ -1719,7 +1723,6 @@ class AtkSelection:
             return 0
         
         def getDamageDice(self, level, crit=False):
-            level = level + self.levelAdjustment[level]
             if level>=self.minL and level<=self.maxL:
                 if self.isSpell:
                     level = self.spellLevel(level)
@@ -1737,7 +1740,6 @@ class AtkSelection:
             return []
                 
         def getCriticalBonusDamage(self, level):
-            level = level + self.levelAdjustment[level]
             if self.critDamage:
                 if self.isSpell:
                     level = self.spellLevel(level)
@@ -1745,7 +1747,6 @@ class AtkSelection:
             return 0
         
         def getCriticalBonusDamageDice(self, level):
-            level = level + self.levelAdjustment[level]
             d = []
             if self.isSpell:
                 level = self.spellLevel(level)
@@ -1758,7 +1759,6 @@ class AtkSelection:
             return d
         
         def getPersistentDamage(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.persDamage:
@@ -1766,7 +1766,6 @@ class AtkSelection:
             return 0
         
         def getPersistentDamageDice(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.persDamageDice:
@@ -1788,7 +1787,6 @@ class AtkSelection:
 #            return []
         
         def getSplashDamage(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.splashDamage:
@@ -1796,7 +1794,6 @@ class AtkSelection:
             return 0
         
         def getCriticalPersistentDamage(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.critPersDamage:
@@ -1804,7 +1801,6 @@ class AtkSelection:
             return 0
         
         def getCriticalPersistentDamageDice(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.critPersDamageDice:
@@ -1812,7 +1808,6 @@ class AtkSelection:
             return []
         
         def getFFDamage(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.flatfootedDamage:
@@ -1820,7 +1815,6 @@ class AtkSelection:
             return 0
         
         def getFFDamageDice(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             if self.flatfootedDamageDice:
@@ -1835,7 +1829,6 @@ class AtkSelection:
 #            return 0
         
         def getFailureDamageDice(self, level):
-            level = level + self.levelAdjustment[level]
             if self.isSpell:
                 level = self.spellLevel(level)
             failureDice = []
@@ -1847,28 +1840,23 @@ class AtkSelection:
 
         
         def getKeen(self, level):
-            level = level + self.levelAdjustment[level]
             if level >= self.keenLevel:
                 return True
             return False
         def getBackswing(self, level):
-            level = level + self.levelAdjustment[level]
             if level >= self.backswingLevel:
                 return True
             return False
         
         def ffonCrit(self, level):
-            level = level + self.levelAdjustment[level]
             if level >= self.ffonCritLevel:
                 return True
             return False
         def ffonSuccess(self, level):
-            level = level + self.levelAdjustment[level]
             if level >= self.ffonSuccessLevel:
                 return True
             return False
         def ffonFail(self, level):
-            level = level + self.levelAdjustment[level]
             if level >= self.ffonFailLevel:
                 return True
             return False
@@ -1912,7 +1900,16 @@ class AtkSelection:
             for i in self.levelAdjustment:
                 if i >= startLevel:
                     self.levelAdjustment[i] += amount
+        def attackLevel(self, level):
+            return level + self.levelAdjustment[level]
+        
         def setLevels(self, minl, maxl):
+            # if self.fixedStrike:
+            #     if minl != 1:
+            #         self.minL = max(minl, self.minL)
+            #     if maxl != 20:
+            #         self.maxL = min(maxl, self.maxL)
+            #     return
             self.minL = max(minl, self.minL)
             self.maxL = min(maxl, self.maxL)
             
@@ -2330,6 +2327,8 @@ class FixedStrike(Strike):
         self.fixedStrike = True
         self.prim = False
         self.sec = False
+        self.minL = -1
+        self.maxL = 24
         
     def setPrimaryAS(self, score):
         return False
@@ -2839,6 +2838,11 @@ class Effect(AtkSelection):
         self.flatfoot = False
         self.trueStrike = False
         
+        self.targetAC = None
+        self.targetFort = None
+        self.targetRef = None
+        self.targetWill = None
+        self.targetPer = None
         
         self.addfirsthitdamage = None
         self.addsecondhitdamage = None 
@@ -2864,6 +2868,17 @@ class Effect(AtkSelection):
     def effectResult(self, level, context):
         
         r = Result(self,Distribution(),Distribution())
+        
+        if self.targetAC:
+            r.targetAC = self.targetAC[level]
+        if self.targetFort:
+            r.targetFort = self.targetFort[level]
+        if self.targetRef:
+            r.targetRef = self.targetRef[level]
+        if self.targetWill:
+            r.targetWill = self.targetWill[level]
+        if self.targetPer:
+            r.targetPer = self.targetPer[level]
         
         if self.flatfoot:
             r.futureAttacksFF = True
@@ -4368,6 +4383,107 @@ itemSwitcher = {
     'Study Shield Hardness': [studyhardness],
     'Sturdy Shield HP': [studyhp]}
 
+targetEAC = Effect()
+targetEAC.targetAC = creatureData['AC']['Extreme']
+targetHAC = Effect()
+targetHAC.targetAC = creatureData['AC']['High']
+targetMAC = Effect()
+targetMAC.targetAC = creatureData['AC']['Moderate']
+targetLAC = Effect()
+targetLAC.targetAC = creatureData['AC']['Low']
+
+targetFighterAC = Effect()
+targetFighterAC.targetAC = creatureData['AC']['Moderate']
+
+targetWizardAC = Effect()
+targetWizardAC.targetAC = creatureData['AC']['Moderate']
+
+targetRogueAC = Effect()
+targetRogueAC.targetAC = creatureData['AC']['Moderate']
+
+targetDexMonkAC = Effect()
+targetDexMonkAC.targetAC = creatureData['AC']['Moderate']
+
+targetChampionAC = Effect()
+targetChampionAC.targetAC = creatureData['AC']['Moderate']
+
+targetEF = Effect()
+targetEF.targetFort = creatureData['Saves']['Extreme']
+targetHF = Effect()
+targetHF.targetFort = creatureData['Saves']['High']
+targetMF = Effect()
+targetMF.targetFort = creatureData['Saves']['Moderate']
+targetLF = Effect()
+targetLF.targetFort = creatureData['Saves']['Low']
+targetTF = Effect()
+targetTF.targetFort = creatureData['Saves']['Terrible']
+
+targetER = Effect()
+targetER.targetRef = creatureData['Saves']['Extreme']
+targetHR = Effect()
+targetHR.targetRef = creatureData['Saves']['High']
+targetMR = Effect()
+targetMR.targetRef = creatureData['Saves']['Moderate']
+targetLR = Effect()
+targetLR.targetRef = creatureData['Saves']['Low']
+targetTR = Effect()
+targetTR.targetRef = creatureData['Saves']['Terrible']
+
+targetEW = Effect()
+targetEW.targetWill = creatureData['Saves']['Extreme']
+targetHW = Effect()
+targetHW.targetWill = creatureData['Saves']['High']
+targetMW = Effect()
+targetMW.targetWill = creatureData['Saves']['Moderate']
+targetLW = Effect()
+targetLW.targetWill = creatureData['Saves']['Low']
+targetTW = Effect()
+targetTW.targetWill = creatureData['Saves']['Terrible']
+
+targetEP = Effect()
+targetEP.targetPer = creatureData['Saves']['Extreme']
+targetHP = Effect()
+targetHP.targetPer = creatureData['Saves']['High']
+targetMP = Effect()
+targetMP.targetPer = creatureData['Saves']['Moderate']
+targetLP = Effect()
+targetLP.targetPer = creatureData['Saves']['Low']
+targetTP = Effect()
+targetTP.targetPer = creatureData['Saves']['Terrible']
+
+
+
+targetSwitcher = {
+    'Target Extreme AC': [targetEAC],
+                 'Target High AC': [targetHAC],
+                 'Target Moderate AC': [targetMAC],
+                 'Target Low AC': [targetLAC],
+                 'Target Fighter AC': [targetFighterAC],
+                 'Target Wizard AC': [targetWizardAC],
+                 'Target DexMonk AC': [targetDexMonkAC],
+                 'Target Rogue AC': [targetRogueAC],
+                 'Target Champion AC': [targetChampionAC],
+                 'Target Extreme Fort': [targetEF],
+                 'Target High Fort': [targetHF],
+                 'Target Moderate Fort': [targetMF],
+                 'Target Low Fort': [targetLF],
+                 'Target Terrible Fort': [targetTF],
+                 'Target Extreme Ref': [targetER],
+                 'Target High Ref': [targetHR],
+                 'Target Moderate Ref': [targetMR],
+                 'Target Low Ref': [targetLR],
+                 'Target Terrible Ref': [targetTR],
+                 'Target Extreme Will': [targetEW],
+                 'Target High Will': [targetHW],
+                 'Target Moderate Will': [targetMW],
+                 'Target Low Will': [targetLW],
+                 'Target Terrible Will': [targetTW],
+                 'Target Extreme Per': [targetEP],
+                 'Target High Per': [targetHP],
+                 'Target Moderate Per': [targetMP],
+                 'Target Low Per': [targetLP],
+                 'Target Terrible Per': [targetTP]}
+
 attackSwitcher = {**alchemistAttackSwitcher,
                   **barbarianAttackSwitcher,
                   **otherAttackSwitcher,
@@ -4380,4 +4496,5 @@ attackSwitcher = {**alchemistAttackSwitcher,
                   **spellAttackSwitcher,
                   **focusSpellAttackSwitcher,
                   **skillAttackSwitcher,
-                  **itemSwitcher}
+                  **itemSwitcher,
+                  **targetSwitcher}
