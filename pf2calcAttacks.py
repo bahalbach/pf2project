@@ -1375,6 +1375,7 @@ class AtkSelection:
                     for i in range(self.critSpecLevel,21):
                         self.critPersDamage[i] += wiBonus[i]
                         self.critPersDamageDice[i] += [d6]
+                        self.persDamageType  = Bleed
                 elif csName == "hammer":
                     self.ffonCritLevel = min(self.ffonCritLevel,self.critSpecLevel)
                 elif csName == "sword":
@@ -1394,7 +1395,7 @@ class AtkSelection:
                             self.runeDamageDice[i]+=[d12]
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
-                if feature[0] == "1d10 Rune":
+                elif feature[0] == "1d10 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
@@ -1402,7 +1403,7 @@ class AtkSelection:
                             self.runeDamageDice[i]+=[d10]
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
-                if feature[0] == "1d8 Rune":
+                elif feature[0] == "1d8 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
@@ -1410,7 +1411,7 @@ class AtkSelection:
                             self.runeDamageDice[i]+=[d8]
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
-                if feature[0] == "1d6 Rune":
+                elif feature[0] == "1d6 Rune":
                     if not self.isWeapon:
                         continue
                     for i in self.runeDamageDice:
@@ -2179,7 +2180,17 @@ class MeleeStrike(Strike):
         scoreValues = abilityScoreConverter[score]
         self.addDamageBonuses(scoreValues)
         return True
-        
+class TigerSlash(MeleeStrike):
+    def __init__(self, attack, damage, csLevel=21):
+        super().__init__(attack, damage, csLevel=csLevel)
+
+    def setSecondaryAS(self, score):
+        scoreValues = abilityScoreConverter[score]
+        self.addDamageBonuses(scoreValues)
+        for i in range(1,21):
+            self.critPersDamage[i] += scoreValues[i]
+        return True
+    
 class RangedStrike(Strike):
     def __init__(self, attack, damage, csLevel=21):
         super().__init__(attack, damage, csLevel=csLevel)
@@ -3577,6 +3588,23 @@ rangerbearsupport.addeveryhitdamageDice = rangerbearsupportdamage
 kistrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
 kistrike.runeDamageDice = {i: int((3+sDice[i])/4)*[d6] for i in range(1,21)}
 
+tigerclaw = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+tigerclaw.persDamageType  = Bleed
+tigerclaw.critPersDamageDice = {i: [d4] for i in range(1,21)}
+
+tigerslash = TigerSlash(martialAttackBonus, martialDamage, csLevel=5)
+tigerslash.critPersDamageDice = {i: [d4] for i in range(1,21)}
+tigerslash.persDamageType  = Bleed
+for i in range(8,21):
+    tigerslash.extraWeaponDice[i] = 1
+    if i >=14:
+        tigerslash.extraWeaponDice[i] = 2
+
+kitigerclaw = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+kitigerclaw.runeDamageDice = {i: int((3+sDice[i])/4)*[d6] for i in range(1,21)}
+kitigerclaw.persDamageType  = Bleed
+kitigerclaw.critPersDamageDice = {i: [d4] for i in range(1,21)}
+
 handapp = MeleeStrike(cantripAttackBonus, strCasterDamage, csLevel=1)
 handappitem = MeleeStrike(cantripAttackBonusItem, strCasterDamage, csLevel=1)
 
@@ -3657,6 +3685,9 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
                        'Ranger Bear Support': [rangerbearsupport],
                        'Bespell Weapon': [bespellweapon],
                        'Ki Strike': [kistrike],
+                       'Tiger Claw': [tigerclaw],
+               'Tiger Slash': [tigerslash],
+               'Ki Tiger Claw': [kitigerclaw],
                        "Hand of the Apprentence": [handapp],
                        "Hand of the Apprentence +item": [handappitem],
                        'Wildshape Animal': [druidanimalform],

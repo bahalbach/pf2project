@@ -899,7 +899,10 @@ martialstrikeOptions = ['Martial Strike',
                         'Martial Ranged Strike',
                         'Martial Propulsive']
 monkOptions = ['Martial Strike',
-               'Ki Strike']
+               'Ki Strike',
+               'Tiger Claw',
+               'Tiger Slash',
+               'Ki Tiger Claw']
 rangerOptions = ['Ranger Precision Edge',
                  'Ranger Bear Support',
                  'Martial Strike',
