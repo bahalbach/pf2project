@@ -1239,7 +1239,7 @@ class AtkSelection:
             self.runeDamageDice = {i: [] for i in range(1,21)}
             self.extraWeaponDice = {i: 0 for i in range(1,21)}
             
-            self.persDamage = copy.copy(noneDamage)
+            self.persDamage = {i: 0 for i in range(1,21)}
             self.persDamageDice = {i: [] for i in range(1,21)}
             self.persDamageType = None
 #            self.NDpersDamage = copy.copy(noneDamage)
@@ -1247,7 +1247,7 @@ class AtkSelection:
             
             self.splashDamage = None
             
-            self.flatfootedDamage = copy.copy(noneDamage)
+            self.flatfootedDamage = {i: 0 for i in range(1,21)}
             self.flatfootedDamageDice = {i: [] for i in range(1,21)}
             
 #            self.failureDamage = copy.copy(noneDamage)
@@ -1255,9 +1255,9 @@ class AtkSelection:
             self.certainStrike = False
             self.brutalFinish = False
             
-            self.critDamage = copy.copy(noneDamage)
+            self.critDamage = {i: 0 for i in range(1,21)}
             self.critDamageDice = {i: [] for i in range(1,21)}
-            self.critPersDamage = copy.copy(noneDamage)
+            self.critPersDamage = {i: 0 for i in range(1,21)}
             self.critPersDamageDice = {i: [] for i in range(1,21)}
             
             self.fatal = False
@@ -1427,6 +1427,14 @@ class AtkSelection:
                             self.runeDamageDice[i]+=[d4]
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "Flaming Crit Persistent":
+                    if not self.isWeapon:
+                        continue
+                    for i in range(feature[1],21):
+                        self.critPersDamageDice[i] += [d10]
+                        self.persDamageType  = Fire
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "Add 1 Die":
                     for i in self.weaponDamageDice:
                         if i >= feature[1]:
@@ -1449,6 +1457,10 @@ class AtkSelection:
                     self.setBackswing(feature[1])
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == "backstabber":
+                    self.setBackstabber(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"     
                 elif feature[0] == "keen":
                     self.setKeen(feature[1])
                     if feature[1] < 21:
@@ -1873,6 +1885,11 @@ class AtkSelection:
             self.keenLevel = min(level, self.keenLevel)
         def setBackswing(self, level):
             self.backswingLevel = min(level, self.backswingLevel)
+        def setBackstabber(self, level):
+            for i in range(level,21):
+                self.flatfootedDamage[i] += 1
+                if wiBonus[i] >= 3:
+                    self.flatfootedDamage[i] += 1
         def setBrutalCritical(self, level):
             for i in range(level, 21):
                 self.critDamageDice[i] += [self.damageDie]
