@@ -149,21 +149,24 @@ class Distribution:
 #            self.name+="d"+str(len(die))
         self.dist = dist
         self.minimum += len(dice)
-        self.minimum += static
-        self.average = None
+        return self.addBonus(static, alwaysAdd=True)
+        # self.minimum += static
+        # self.average = None
         
-        if self.minimum < 0:
-            raise Exception("< 0 damage not implimented")
-        return self
+        # if self.minimum < 0:
+        #     raise Exception("< 0 damage not implimented")
+        # return self
     
-    def addBonus(self, static):
+    def addBonus(self, static, alwaysAdd=False):
         if Distribution.NoCalculation:
             self.average += static
             if self.average > 0:
                 self.average = max(self.average,1)
             return self
         
-        if self.minimum == 0:
+        if self.minimum == 0 and not alwaysAdd:
+            return self
+        if self.minimum == 0 and static <= 0:
             return self
         
         # don't go below 1, only if already above 1
@@ -174,6 +177,7 @@ class Distribution:
         else:
             self.minimum += static
         self.average = None
+        
     def addWeakness(self, static):
         if Distribution.NoCalculation:
             self.average += static
