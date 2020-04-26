@@ -974,7 +974,7 @@ damageDiceConverter = {"1d4": [d4,0],
                        "1d10+2": [d10,2],
                        "1d12+2": [d12,2]}
 
-noneDamage = {i: 0 for i in range(1,21)}
+noneDamage = {i: 0 for i in range(-1,24)}
 deadlyd6DamageDice = {i: [d6]*max(1,(wDice[i]-1)) for i in range(1,21)}
 deadlyd8DamageDice = {i: [d8]*max(1,(wDice[i]-1)) for i in range(1,21)}
 deadlyd10DamageDice = {i: [d10]*max(1,(wDice[i]-1)) for i in range(1,21)}
@@ -1149,6 +1149,9 @@ class Result:
         self.addHidden = False
         self.removeHidden = False
         
+        self.setFortification = False
+        self.fortification = 0
+        
         self.atk = atk
         self.ishit = False
         self.iscrit = False
@@ -1236,29 +1239,29 @@ class AtkSelection:
             self.damageDie = [1] # 3.5
             self.weaponDamageDice = None
             self.damageDieBonus = None
-            self.runeDamageDice = {i: [] for i in range(1,21)}
-            self.extraWeaponDice = {i: 0 for i in range(1,21)}
+            self.runeDamageDice = {i: [] for i in range(-1,25)}
+            self.extraWeaponDice = {i: 0 for i in range(-1,25)}
             
-            self.persDamage = {i: 0 for i in range(1,21)}
-            self.persDamageDice = {i: [] for i in range(1,21)}
+            self.persDamage = {i: 0 for i in range(-1,25)}
+            self.persDamageDice = {i: [] for i in range(-1,25)}
             self.persDamageType = None
 #            self.NDpersDamage = copy.copy(noneDamage)
 #            self.NDpersDamageDice = {i: [] for i in range(1,21)}
             
             self.splashDamage = None
             
-            self.flatfootedDamage = {i: 0 for i in range(1,21)}
-            self.flatfootedDamageDice = {i: [] for i in range(1,21)}
+            self.flatfootedDamage = {i: 0 for i in range(-1,25)}
+            self.flatfootedDamageDice = {i: [] for i in range(-1,25)}
             
 #            self.failureDamage = copy.copy(noneDamage)
-            self.failureDamageDice = {i: [] for i in range(1,21)}
+            self.failureDamageDice = {i: [] for i in range(-1,25)}
             self.certainStrike = False
             self.brutalFinish = False
             
-            self.critDamage = {i: 0 for i in range(1,21)}
-            self.critDamageDice = {i: [] for i in range(1,21)}
-            self.critPersDamage = {i: 0 for i in range(1,21)}
-            self.critPersDamageDice = {i: [] for i in range(1,21)}
+            self.critDamage = {i: 0 for i in range(-1,25)}
+            self.critDamageDice = {i: [] for i in range(-1,25)}
+            self.critPersDamage = {i: 0 for i in range(-1,25)}
+            self.critPersDamageDice = {i: [] for i in range(-1,25)}
             
             self.fatal = False
             self.fatalDie = None
@@ -1320,8 +1323,8 @@ class AtkSelection:
             self.addHidden = False
             self.removeHidden = False
             
-            self.minL = 1
-            self.maxL = 20
+            self.minL = -1
+            self.maxL = 24
             self.levelAdjustment = {i: 0 for i in range(-1,24)}
         def getAttackObject(self,level):
             return self
@@ -1722,7 +1725,8 @@ class AtkSelection:
                     return None
                 if self.isSpell and self.fixedStrike:
                     level = level + self.spellLevelModifier*2
-                return self.attack[level] + self.attackBonus
+                if level in self.attack:
+                    return self.attack[level] + self.attackBonus
             return None
         
         def getDamageBonus(self, level):
@@ -2860,11 +2864,14 @@ class AttackSave(AtkSelection):
     
 class Effect(AtkSelection):
     def __init__(self):
-        super().__init__(casterAttackBonus, noneDamage)
+        super().__init__(noneDamage, noneDamage)
         self.applyConcealment = False
         self.flatfootNextStrike = False
         self.flatfoot = False
         self.trueStrike = False
+        
+        self.setFortification = False
+        self.fortification = 0
         
         self.targetAC = None
         self.targetFort = None
@@ -2918,6 +2925,10 @@ class Effect(AtkSelection):
         r.addHidden = self.addHidden
         r.removeConcealment = self.removeConcealment
         r.removeHidden = self.removeHidden
+        
+        if self.setFortification:
+            r.setFortification = True
+            r.fortification = self.fortification
         
         if self.addfirsthitdamage:
             r.addfirsthitdamage = self.addfirsthitdamage[level]
@@ -3939,6 +3950,18 @@ invisibility.addHidden = True
 removeConcealment = Effect()
 removeConcealment.removeConcealment = True
 
+addFortification = Effect()
+addFortification.setFortification = True
+addFortification.fortification = 20
+
+addFortification2 = Effect()
+addFortification2.setFortification = True
+addFortification2.fortification = 35
+
+removeFortification = Effect()
+removeFortification.setFortification = True
+removeFortification.fortification = 0
+
 applyPersistent = ApplyPersistentDamage()
 
 effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
@@ -3946,6 +3969,9 @@ effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
                         'Blur': [blur],
                         'Invisibility':[invisibility],
                         'Remove Concealment': [removeConcealment],
+                        'Add Fortification': [addFortification],
+                        'Add Fortification(Greater)': [addFortification2],
+                        'Remove Fortification': [removeFortification],
                         'Apply Persistent Damage': [applyPersistent]}
 
 

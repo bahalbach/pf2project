@@ -485,9 +485,9 @@ damageModifier = widgets.BoundedIntText(
 )
 
 levelLimiter = widgets.IntRangeSlider(
-    value=[1, 20],
-    min=1,
-    max=20,
+    value=[-1, 24],
+    min=-1,
+    max=24,
     step=1,
     description = 'Level Range',
     layout=widgets.Layout(width='auto')
@@ -951,6 +951,9 @@ effectOptions = ['Flat Foot Target',
                  'Blur',
                         'Invisibility',
                         'Remove Concealment',
+                        'Add Fortification',
+                        'Add Fortification(Greater)',
+                        'Remove Fortification',
                         'Apply Persistent Damage']
 targetOptions = ['Target Extreme AC',
                  'Target High AC',

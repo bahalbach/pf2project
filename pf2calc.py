@@ -493,6 +493,7 @@ class Context:
         self.attackBonus = 0
         
         self.concealment = 0
+        self.fortification = 0
         
         self.clumsy = 0
         self.drained = 0
@@ -549,6 +550,7 @@ class Context:
         self.attackBonus = oldContext.attackBonus
             
         self.concealment = oldContext.concealment
+        self.fortification = oldContext.fortification
         
         self.debuffAttack = oldContext.debuffAttack
         self.clumsy = oldContext.clumsy
@@ -622,6 +624,9 @@ class Context:
         if result.removeHidden:
             if self.concealment >= 20:
                 self.concealment = 20
+                
+        if result.setFortification:
+            self.fortification = result.fortification
                         
         if result.applyPersistentDamage:
             self.damageChances.applyPersistentDamage()
@@ -1252,6 +1257,10 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 failurePercent = failurePercent * (100-concealment)/100
                 critFailurePercent = critFailurePercent * (100-concealment)/100
                 noEffectPercent = concealment
+                
+            if isinstance(atk, Strike):
+                critSuccessPercent = critSuccessPercent * (100-context.fortification)/100
+                successPercent += critSuccessPercent * context.fortification/100
                 
             if context.treatWorse:
                 critFailurePercent = critFailurePercent + failurePercent
