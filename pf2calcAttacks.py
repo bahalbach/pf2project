@@ -3861,11 +3861,11 @@ fighterAttackSwitcher = {'Fighter Melee Strike':
     
 
 martialMCfighterMelee = MeleeStrike(martialAttackBonus,martialDamage, csLevel=21)
-casterMCfighterMelee = MeleeStrike(casterAttackBonus,casterDamage, csLevel=21)
+casterMCfighterMelee = MeleeStrike(casterAttackBonus,strCasterDamage, csLevel=21)
 martialMCfighterRanged = MeleeStrike(martialAttackBonus,martialDamage, csLevel=21)
-casterMCfighterRanged = MeleeStrike(casterAttackBonus,casterDamage, csLevel=21)
+casterMCfighterRanged = MeleeStrike(casterAttackBonus,strCasterDamage, csLevel=21)
 martialMCfighterPropulsive = MeleeStrike(martialAttackBonus,martialDamage, csLevel=21)
-casterMCfighterPropulsive = MeleeStrike(casterAttackBonus,casterDamage, csLevel=21)
+casterMCfighterPropulsive = MeleeStrike(casterAttackBonus,strCasterDamage, csLevel=21)
     
 multiclassAttackSwitcher = {'Martial Multiclass Fighter Melee Strike': [martialMCfighterMelee],
                             'Caster Multiclass Fighter Melee Strike': [casterMCfighterMelee],
