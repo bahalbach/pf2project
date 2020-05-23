@@ -362,6 +362,12 @@ for i in range(1,21):
     wProf[i] += 2
     if i >=7: 
         wProf[i] += 2
+        
+fMCProf = dict(zip(list(range(1,21)),list(range(1,21))))
+for i in range(1,21):
+    fMCProf[i] += 2
+    if i >=12: 
+        fMCProf[i] += 2
 
 fProf = copy.copy(mProf)
 for i in fProf:
@@ -3853,7 +3859,21 @@ fighterAttackSwitcher = {'Fighter Melee Strike':
                   [fighterpropulsivecs]
                   }
     
+
+martialMCfighterMelee = MeleeStrike(martialAttackBonus,martialDamage, csLevel=21)
+casterMCfighterMelee = MeleeStrike(casterAttackBonus,casterDamage, csLevel=21)
+martialMCfighterRanged = MeleeStrike(martialAttackBonus,martialDamage, csLevel=21)
+casterMCfighterRanged = MeleeStrike(casterAttackBonus,casterDamage, csLevel=21)
+martialMCfighterPropulsive = MeleeStrike(martialAttackBonus,martialDamage, csLevel=21)
+casterMCfighterPropulsive = MeleeStrike(casterAttackBonus,casterDamage, csLevel=21)
     
+multiclassAttackSwitcher = {'Martial Multiclass Fighter Melee Strike': [martialMCfighterMelee],
+                            'Caster Multiclass Fighter Melee Strike': [casterMCfighterMelee],
+                           'Martial Multiclass Fighter Ranged Strike': [martialMCfighterRanged],
+                            'Caster Multiclass Fighter Ranged Strike': [casterMCfighterRanged],
+                           'Martial Multiclass Fighter Propulsive Strike': [martialMCfighterPropulsive],
+                            'Caster Multiclass Fighter Propulsive Strike': [casterMCfighterPropulsive]}
+
 druidwolf = FixedStrike(druidwolfattack, druidwolfdamage)
 rangerwolf = FixedStrike(rangerwolfattack, rangerwolfdamage)
 druidbear = FixedStrike(druidbearattack, druidbeardamage)
