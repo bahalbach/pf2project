@@ -921,7 +921,7 @@ wizardOptions = ['Caster Strike',
                  'Bespell Weapon',
                  "Hand of the Apprentence",
                  "Hand of the Apprentence +item"]
-Multiclass Options = ['Martial MC Fighter Melee Strike',
+multiclassOptions = ['Martial MC Fighter Melee Strike',
                  'Caster MC Fighter Melee Strike',
                  "Martial MC Fighter Ranged Strike",
                  "Caster MC Fighter Ranged Strike",
