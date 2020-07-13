@@ -1522,7 +1522,7 @@ def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, wea
                     toAdd = False
         else:
             for st in s:  
-                if not(st.getAttack(st.attackLevel(level)) ):
+                if (st.getAttack(st.attackLevel(level)) is None):
                     toAdd = False
         
         if toAdd:
@@ -1568,7 +1568,7 @@ def createDamageDistribution(levelDiff, flatfootedStatus, attackBonus, damageBon
                     toAdd = False
         else:
             for st in s:  
-                if not(st.getAttack(st.attackLevel(level)) ):
+                if (st.getAttack(st.attackLevel(level)) is None):
                     toAdd = False
         
         if toAdd:
@@ -1602,7 +1602,7 @@ def createDebuffDistribution(levelDiff, flatfootedStatus, attackBonus, damageBon
                     toAdd = False
         else:
             for st in s:  
-                if not(st.getAttack(st.attackLevel(level)) ):
+                if (st.getAttack(st.attackLevel(level)) is None):
                     toAdd = False
         
         if toAdd:
