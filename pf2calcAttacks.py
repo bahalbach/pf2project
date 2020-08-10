@@ -891,6 +891,28 @@ for i in rangerbeardamage:
         rangerbeardamage[i] = 18
     if i >= 16:
         rangerbeardamage[i] = 26.5 
+        
+panacheDamage = {i: 2 for i in range(1,21)}
+for i in panacheDamage:
+    if i >= 5:
+        panacheDamage[i] = 3
+    if i >= 9:
+        panacheDamage[i] = 4
+    if i >= 13:
+        panacheDamage[i] = 5
+    if i >= 17:
+        panacheDamage[i] = 6
+        
+panacheDamageDice = {i: 2*[d6] for i in range(1,21)}
+for i in panacheDamageDice:
+    if i >= 5:
+        panacheDamageDice[i] = 3*[d6]
+    if i >= 9:
+        panacheDamageDice[i] = 4*[d6]
+    if i >= 13:
+        panacheDamageDice[i] = 5*[d6]
+    if i >= 17:
+        panacheDamageDice[i] = 6*[d6]
       
 # ability score bonuses by level
 as10 = {i: 0 for i in range(1,21)}
@@ -1061,6 +1083,8 @@ spellDamage13 = {i: sDice[i]*13 for i in range(1,21)}
 
 martialDamage = {i:  mwSpec[i] for i in range(1,21)}
 martialRangedDamage = {i: mwSpec[i] for i in range(1,21)}
+
+swashDamage = {i: martialDamage[i] + panacheDamage[i] for i in range(1,21)}
 
 barbariananimaldamage = {i: martialDamage[i] + animalragedamage[i] for i in range(1,21)}
 barbarianagileanimaldamage = {i: martialDamage[i] + int(animalragedamage[i]/2) for i in range(1,21)}
@@ -1277,6 +1301,8 @@ class AtkSelection:
             self.doubleDamage = True
             self.doublePersDamage = True
             self.halveDamage = True
+            self.halveFailureDamage = False
+            
             self.damageOnSuccesSave = True
             
             self.ignoreConcealment = False
@@ -2147,6 +2173,9 @@ class Strike(AtkSelection):
             
         damageDist = Distribution(damageDice,staticDamage)
         damageDist.addBonus(bonus)
+        
+        if self.halveFailureDamage:
+            damageDist.halve()
         
         # splash damage
         splashDam = self.getSplashDamage(level)
@@ -3595,6 +3624,39 @@ martialstrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
 martialrangedstrike = RangedStrike(martialAttackBonus, martialRangedDamage, csLevel=5)
 martialpropulsive = PropulsiveStrike(martialAttackBonus, martialRangedDamage, csLevel=5)
 
+# 'Martial Strike',
+#                        'Panache Strike',
+#                        'Finisher',
+#                        'Confident Finisher',
+#                        'Precise Finisher',
+#                        'Bleeding Finsher',
+#                        'True Strike'
+panachestrike = MeleeStrike(martialAttackBonus, swashDamage, csLevel=5)
+
+finisher = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+finisher.runeDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+
+confidentfinisher = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+confidentfinisher.runeDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+confidentfinisher.failureDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+confidentfinisher.halveFailureDamage = True
+
+precisefinisher = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+precisefinisher.runeDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+precisefinisher.failureDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+
+bleedingfinisher = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+bleedingfinisher.runeDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+bleedingfinisher.persDamageDice = {i: panacheDamage[i] * [d6] for i in range(1,21)}
+bleedingfinisher.persDamageType = Bleed
+bleedingfinisher.doublePersDamage = False
+
+alchemistbsacids.persDamageDice = sacidFlaskPersDamage
+#alchemistbsacids.critPersDamage = {i: acidFlaskPersDamage[i]*2 for i in range(1,21)}
+alchemistbsacids.splashDamage = sbombSplashDamage
+alchemistbsacids.stickybombLevel = 8
+alchemistbsacids.persDamageType = Acid
+                       
 championsmiteevil = MeleeStrike(martialAttackBonus, championsmiteevildamage, csLevel=3)
 
 warprieststrike = MeleeStrike(warpriestAttackBonus, warpriestDamage, csLevel=7)
@@ -3703,6 +3765,11 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
                        'Caster Ranged Strike': [casterrangedstrike],
                        'Caster Propulsive': [casterpropulsive],
                        'Martial Strike': [martialstrike],
+                       'Panache Strike': [panachestrike],
+                       'Finisher': [finisher],
+                       'Confident Finisher': [confidentfinisher],
+                       'Precise Finisher': [precisefinisher],
+                       'Bleeding Finsher': [bleedingfinisher],
                        'Martial Ranged Strike': [martialrangedstrike],
                        'Martial Propulsive': [martialpropulsive],
                        'Champion Smite Evil': [championsmiteevil],
