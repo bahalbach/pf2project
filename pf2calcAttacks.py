@@ -2576,6 +2576,33 @@ class ScareToDeath(SaveAttack):
         
         r.frightened = 1
         return r
+    
+class Trip(SaveAttack):
+    def __init__(self, attack):
+        super().__init__(attack, noneDamage)
+        self.targetSave = Reflex
+        
+    def critSuccessResult(self, level, context):
+        bonus = self.damageBonus
+        bonus += context.getDamageBonus()
+        bonus += context.getExtraDamage()
+          
+        #create distribution
+        damageDist = Distribution([d6],0)
+        damageDist.addBonus(bonus)
+        
+        r = Result(self, damageDist, Distribution())
+        r.setCritSuccess()
+        
+        r.futureAttacksFF = True
+        return r
+    
+    def successResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.setSuccess()
+        
+        r.futureAttacksFF = True
+        return r
         
 class Save(AtkSelection):
     def __init__(self, dc, damage):
@@ -4480,6 +4507,8 @@ scoundrelfeint = ScoundrelFeint(rogueMaxSkill)
 maxdemoralize = Demoralize(maxSkillBonus)
 traineddemoralize = Demoralize(trainedSkillBonus)
 scaretodeath = ScareToDeath(maxSkillBonus)
+trainedtrip = Trip(trainedSkillBonus)
+maxtrip = Trip(maxSkillBonus)
 
 skillAttackSwitcher = {
         'Scoundrel Feint': [scoundrelfeint],
@@ -4487,7 +4516,9 @@ skillAttackSwitcher = {
         'Max Feint': [maxfeint],
         'Trained Demoralize': [traineddemoralize],
         'Max Demoralize': [maxdemoralize],
-        'Scare to Death': [scaretodeath]
+        'Scare to Death': [scaretodeath],
+        'Trained Trip': [trainedtrip],
+        'Max Trip': [maxtrip]
         }
 shardness = {i: 5 for i in range(1,21)}
 for i in shardness:

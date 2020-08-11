@@ -1078,7 +1078,9 @@ skillOptions = ['Trained Feint',
                 'Max Feint',
                 'Trained Demoralize',
                 'Max Demoralize',
-                'Scare to Death']
+                'Scare to Death',
+                'Trained Trip',
+                'Max Trip']
 itemOptions = ['Study Shield Hardness',
                'Sturdy Shield HP']
 
