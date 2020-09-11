@@ -1483,6 +1483,10 @@ class AtkSelection:
                     self.setMCCaster(feature[1])
                     if feature[1] < 21:
                         self.details += "[" + str(feature) + "]\n"
+                elif feature[0] == 'Magus Proficiency':
+                    self.setMagusCaster(feature[1])
+                    if feature[1] < 21:
+                        self.details += "[" + str(feature) + "]\n"
                 elif feature[0] == "backswing":
                     self.setBackswing(feature[1])
                     if feature[1] < 21:
@@ -1971,6 +1975,15 @@ class AtkSelection:
                 elif i >= 15:
                     self.attack[i] -= 2
                 elif i >= 12:
+                    pass
+                elif i >= 7:
+                    self.attack[i] -= 2
+        
+        def setMagusCaster(self, level):
+            for i in range(level, 21):
+                if i >= 15:
+                    self.attack[i] -= 2
+                elif i >= 11:
                     pass
                 elif i >= 7:
                     self.attack[i] -= 2
