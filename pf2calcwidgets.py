@@ -905,7 +905,8 @@ martialstrikeOptions = ['Martial Strike',
 magusOptions = ['Martial Strike',
                         'Martial Ranged Strike',
                         'Martial Propulsive',
-                        'Spell Strike']
+                        'Spell Strike',
+                        'Spell Strike Miss']
 monkOptions = ['Martial Strike',
                'Ki Strike',
                'Tiger Claw',
