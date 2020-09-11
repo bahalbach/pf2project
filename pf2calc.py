@@ -488,6 +488,7 @@ class Context:
         self.trueStrike = False
         self.treatWorse = False
         self.ignoreNext = False
+        self.ignoreRest = False
         self.setAttack = None
         
         self.attackBonus = 0
@@ -545,6 +546,7 @@ class Context:
         self.origffstatus = oldContext.origffstatus
         self.treatWorse = False
         self.ignoreNext = False
+        self.ignoreRest = False
         self.setAttack = oldContext.setAttack
         
         self.attackBonus = oldContext.attackBonus
@@ -635,6 +637,9 @@ class Context:
                     
         if result.ignoreNext:
             self.ignoreNext = True
+            
+        if result.ignoreRest:
+            self.ignoreRest = True
                     
         if not result.setAttack is None:
             self.setAttack = result.setAttack
@@ -802,6 +807,7 @@ class Context:
         self.origffstatus == obj.origffstatus and \
         self.treatWorse == obj.treatWorse and \
         self.ignoreNext == obj.ignoreNext and \
+        self.ignoreRest == obj.ignoreRest and \
         self.setAttack == obj.setAttack and \
         self.attackBonus == obj.attackBonus and \
         self.concealment == obj.concealment and \
@@ -1263,13 +1269,21 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                 successPercent += critSuccessPercent * context.fortification/100
                 
             if context.treatWorse:
-                critFailurePercent = critFailurePercent + failurePercent
-                failurePercent = successPercent
-                successPercent = critSuccessPercent
-                critSuccessPercent = 0
-                
+                if isinstance(atk, Save):
+                    critFailurePercent = critFailurePercent + failurePercent
+                    failurePercent = successPercent
+                    successPercent = critSuccessPercent
+                    critSuccessPercent = 0
+                else: 
+                    critSuccessPercent = successPercent + critSuccessPercent
+                    successPercent = failurePercent
+                    failurePercent = critFailurePercent
+                    critFailurePercent = 0
             if context.ignoreNext:
                 ignoreContext = Context(context, 1, None)
+                if context.ignoreRest:
+                    ignoreContext.ignoreNext = True
+                    ignoreContext.ignoreRest = True
                 newContextList.append(ignoreContext)
             else:
                 if critSuccessPercent != 0:

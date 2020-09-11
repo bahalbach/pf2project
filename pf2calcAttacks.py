@@ -1166,6 +1166,7 @@ class Result:
         
         self.treatWorse = False
         self.ignoreNext = False
+        self.ignoreRest = False
         self.setAttack = None
         
         self.addConcealment = False
@@ -2467,11 +2468,13 @@ class SpellStrikeMissFilter(RangedStrike):
     def critSuccessResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
         r.ignoreNext = True
+        r.ignoreRest = True
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
         r.ignoreNext = True
+        r.ignoreRest = True
         return r
         
     def failureResult(self, level, context):
