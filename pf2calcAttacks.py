@@ -2458,6 +2458,29 @@ class SpellStrikeFilter(RangedStrike):
         r.setCritFail()
         r.ignoreNext = True
         return r
+    
+class SpellStrikeMissFilter(RangedStrike):
+    def __init__(self, attack, damage):
+        super().__init__(attack, damage)
+        self.isWeapon = False
+        
+    def critSuccessResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.ignoreNext = True
+        return r
+    
+    def successResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        r.ignoreNext = True
+        return r
+        
+    def failureResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        return r
+        
+    def critFailureResult(self, level, context):
+        r = Result(self, Distribution(),Distribution())
+        return r
         
         
 class SaveAttack(AtkSelection):
@@ -3721,6 +3744,9 @@ rangerprecedge.addthirdhitdamageDice = rangerprecedgedamage3
 rangerbearsupport = Effect()
 rangerbearsupport.addeveryhitdamageDice = rangerbearsupportdamage
 
+spellstrike = SpellStrikeFilter(martialAttackBonus, noneDamage)
+spellstrikemiss = SpellStrikeMissFilter(martialAttackBonus, noneDamage)
+
 kistrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
 kistrike.runeDamageDice = {i: int((3+sDice[i])/4)*[d6] for i in range(1,21)}
 
@@ -3825,6 +3851,8 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
                        'Ranger Precision Edge': [rangerprecedge],
                        'Ranger Bear Support': [rangerbearsupport],
                        'Bespell Weapon': [bespellweapon],
+                       'Spell Strike': [spellstrike],
+                       'Spell Strike Miss': [spellstrikemiss],
                        'Ki Strike': [kistrike],
                        'Tiger Claw': [tigerclaw],
                'Tiger Slash': [tigerslash],
