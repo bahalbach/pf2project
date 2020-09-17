@@ -739,6 +739,7 @@ classSelector = widgets.Dropdown(
                  "Cleric",
                  "Druid",
                  "Fighter",
+                 "Investigator",
                  "Magus",
                  "Monk",
                  "Ranger",
@@ -900,6 +901,8 @@ fighterOptions = ['Fighter Melee Strike',
              'Fighter Propulsive es',
              'Fighter Propulsive cs'
              ]
+investigatorOptions = ['Martial Strike',
+                       'Strategic Strike']
 martialstrikeOptions = ['Martial Strike',
                         'Martial Ranged Strike',
                         'Martial Propulsive']
@@ -1103,6 +1106,7 @@ selectionSwitcher = {"Alchemist": alchemistOptions,
                      "Cleric": clericOptions,
                      "Druid": druidOptions,
                      "Fighter": fighterOptions,
+                     "Investigator": investigatorOptions,
                      "Magus": magusOptions,
                      "Monk": monkOptions,
                      "Martial Strikes": martialstrikeOptions,

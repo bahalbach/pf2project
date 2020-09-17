@@ -3718,6 +3718,10 @@ martialpropulsive = PropulsiveStrike(martialAttackBonus, martialRangedDamage, cs
 #                        'Precise Finisher',
 #                        'Bleeding Finsher',
 #                        'True Strike'
+
+strategicstrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
+strategicstrike.runeDamageDice = {i: int((i+3)/4) * [d6] for i in range(1,21)}
+
 panachestrike = MeleeStrike(martialAttackBonus, swashDamage, csLevel=5)
 
 finisher = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
@@ -3855,6 +3859,7 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
                        'Caster Ranged Strike': [casterrangedstrike],
                        'Caster Propulsive': [casterpropulsive],
                        'Martial Strike': [martialstrike],
+                       'Strategic Strike': [strategicstrike],
                        'Panache Strike': [panachestrike],
                        'Finisher': [finisher],
                        'Confident Finisher': [confidentfinisher],
