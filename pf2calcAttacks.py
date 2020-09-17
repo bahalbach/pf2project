@@ -1154,6 +1154,7 @@ class Result:
         self.addthirdhitdamageDice = []
         self.addeveryhitdamageDice = []
         self.adddamage = 0
+        self.addEldritchShotDamage = False
         
         self.debuffAttack = 0
         self.enfeebled = 0
@@ -2498,7 +2499,6 @@ class SpellStrikeMissFilter(RangedStrike):
         r = Result(self, Distribution(),Distribution())
         return r
         
-        
 class SaveAttack(AtkSelection):
     def __init__(self, attack, damage):
         super().__init__(attack, damage)
@@ -2983,6 +2983,7 @@ class Effect(AtkSelection):
         self.flatfootNextStrike = False
         self.flatfoot = False
         self.trueStrike = False
+        self.addEldritchShotDamage = False
         
         self.setFortification = False
         self.fortification = 0
@@ -3035,6 +3036,7 @@ class Effect(AtkSelection):
             r.nextAttackFF = True
         
         r.trueStrike = self.trueStrike
+        r.addEldritchShotDamage = self.addEldritchShotDamage
         r.addConcealment = self.addConcealment
         r.addHidden = self.addHidden
         r.removeConcealment = self.removeConcealment
@@ -4098,6 +4100,9 @@ flatfoot.flatfoot = True
 flatfootnext = Effect()
 flatfootnext.flatfootNextStrike = True
 
+eldritchshot = Effect()
+eldritchshot.addEldritchShotDamage = True
+
 blur = Effect()
 blur.addConcealment = True
 
@@ -4123,6 +4128,7 @@ applyPersistent = ApplyPersistentDamage()
 
 effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
                         'Flat Foot Next Strike': [flatfootnext],
+                        'Eldritch Shot': [eldritchshot],
                         'Blur': [blur],
                         'Invisibility':[invisibility],
                         'Remove Concealment': [removeConcealment],

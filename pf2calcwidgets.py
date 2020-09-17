@@ -963,6 +963,7 @@ summonOptions = ['Summon Animal',
                 'Summon Dragon']
 effectOptions = ['Flat Foot Target',
                  'Flat Foot Next Strike',
+                 'Eldritch Shot',
                  'Blur',
                         'Invisibility',
                         'Remove Concealment',

@@ -489,6 +489,7 @@ class Context:
         self.treatWorse = False
         self.ignoreNext = False
         self.ignoreRest = False
+        self.addEldritchShotDamage = False
         self.setAttack = None
         
         self.attackBonus = 0
@@ -522,6 +523,7 @@ class Context:
         
         self.thisStrikeBonus = 0
         self.thisDamageBonus = 0
+        self.applyOnceDamageDice = []
         
         self.onFirstHitDamageDice = []
         self.onSecondHitDamageDice = []
@@ -547,6 +549,7 @@ class Context:
         self.treatWorse = False
         self.ignoreNext = False
         self.ignoreRest = False
+        self.addEldritchShotDamage = False
         self.setAttack = oldContext.setAttack
         
         self.attackBonus = oldContext.attackBonus
@@ -576,6 +579,7 @@ class Context:
         
         self.thisStrikeBonus = oldContext.thisStrikeBonus
         self.thisDamageBonus = oldContext.thisDamageBonus
+        self.applyOnceDamageDice = []
         
         self.onFirstHitDamageDice = copy.deepcopy(oldContext.onFirstHitDamageDice)
         self.onSecondHitDamageDice = copy.deepcopy(oldContext.onSecondHitDamageDice)
@@ -590,6 +594,7 @@ class Context:
         
         if oldContext.usedDamage:
             self.thisDamageBonus = 0
+            
         self.usedDamage = False
     def processResult(self, result):
         if result.targetAC:
@@ -613,7 +618,10 @@ class Context:
                     
         if result.trueStrike:
             self.trueStrike = True 
-               
+        
+        if result.addEldritchShotDamage:
+            self.addEldritchShotDamage = True
+            
         if result.addConcealment:
             if self.concealment <= 20:
                 self.concealment = 20
@@ -746,7 +754,7 @@ class Context:
         return self.damageBonus
     
     def getHitDamageDice(self):
-        dice = self.onFirstHitDamageDice + self.onEveryHitDamageDice
+        dice = self.onFirstHitDamageDice + self.onEveryHitDamageDice + self.applyOnceDamageDice
         self.didHit = True
         return dice
     
@@ -808,6 +816,7 @@ class Context:
         self.treatWorse == obj.treatWorse and \
         self.ignoreNext == obj.ignoreNext and \
         self.ignoreRest == obj.ignoreRest and \
+        self.addEldritchShotDamage == obj.addEldritchShotDamage and \
         self.setAttack == obj.setAttack and \
         self.attackBonus == obj.attackBonus and \
         self.concealment == obj.concealment and \
@@ -1141,6 +1150,13 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
             # calculate the effects for this attack
             if context.getChance() == 0:
                 continue 
+            
+            if context.addEldritchShotDamage:
+                addDamageContext = Context(context, 1, None)
+                addDamageContext.thisDamageBonus += atk.getDamageBonus(level)
+                addDamageContext.applyOnceDamageDice = atk.getDamageDice(level)
+                newContextList.append(addDamageContext)
+                continue
                 
             keenStatus = False
             trueStrike = False
@@ -1279,6 +1295,7 @@ def generateContextList(routine, target, level, levelDiff, attackBonus, damageBo
                     successPercent = failurePercent
                     failurePercent = critFailurePercent
                     critFailurePercent = 0
+                    
             if context.ignoreNext:
                 ignoreContext = Context(context, 1, None)
                 if context.ignoreRest:
