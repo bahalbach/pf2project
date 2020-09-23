@@ -920,10 +920,15 @@ rangerOptions = ['Ranger Precision Edge',
                  'Ranger Bear Support',
                  'Martial Strike',
                         'Martial Ranged Strike',
-                        'Martial Propulsive']
-rogueOptions = ['Rogue Strike',
+                        'Martial Propulsive',
+                        'Double Slice Precision',
+                        'Precision Edge Damage']
+rogueOptions = ['Martial Strike',
+                'Rogue Strike',
                 'Flat Foot Next Strike',
-                'Scoundrel Feint']
+                'Scoundrel Feint',
+                'Double Slice Precision',
+                'Sneak Attack Damage']
 sorcererOptions = ['Dangerous Sorcery',
                    'Caster Strike',
                    'Bespell Weapon']

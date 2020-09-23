@@ -3758,10 +3758,18 @@ warpriestsmite.runeDamageDice = warpriestSmiteDamageDice
 roguestrike = MeleeStrike(martialAttackBonus, martialDamage, csLevel=5)
 roguestrike.flatfootedDamageDice = sneakattackdamage
 
+sneakattackdamageattack = RangedStrike(martialAttackBonus, noneDamage)
+sneakattackdamageattack.isWeapon = False
+sneakattackdamageattack.weaponDamageDice = sneakattackdamage
+
 rangerprecedge = Effect()
 rangerprecedge.addfirsthitdamageDice = rangerprecedgedamage1
 rangerprecedge.addsecondhitdamageDice = rangerprecedgedamage2
 rangerprecedge.addthirdhitdamageDice = rangerprecedgedamage3
+
+precisionedgedamage = RangedStrike(martialAttackBonus, noneDamage)
+precisionedgedamage.isWeapon = False
+precisionedgedamage.weaponDamageDice = rangerprecedgedamage1
 
 rangerbearsupport = Effect()
 rangerbearsupport.addeveryhitdamageDice = rangerbearsupportdamage
@@ -3871,8 +3879,10 @@ otherAttackSwitcher = {'Caster Strike': [casterstrike],
                        'Warpriest Strike': [warprieststrike],
                        'Warpriest Smite': [warpriestsmite],
                        'Rogue Strike': [roguestrike],
+                       'Sneak Attack Damage': [sneakattackdamageattack],
                        'Ranger Precision Edge': [rangerprecedge],
                        'Ranger Bear Support': [rangerbearsupport],
+                       'Precision Edge Damage': [precisionedgedamage],
                        'Bespell Weapon': [bespellweapon],
                        'Spell Strike': [spellstrike],
                        'Spell Strike Miss': [spellstrikemiss],
@@ -4131,6 +4141,9 @@ removeFortification.fortification = 0
 
 applyPersistent = ApplyPersistentDamage()
 
+doublesliceprecision = Effect()
+doublesliceprecision.trueStrike = True
+
 effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
                         'Flat Foot Next Strike': [flatfootnext],
                         'Eldritch Shot': [eldritchshot],
@@ -4140,7 +4153,8 @@ effectAttackSwitcher = {'Flat Foot Target': [flatfoot],
                         'Add Fortification': [addFortification],
                         'Add Fortification(Greater)': [addFortification2],
                         'Remove Fortification': [removeFortification],
-                        'Apply Persistent Damage': [applyPersistent]}
+                        'Apply Persistent Damage': [applyPersistent],
+                        'Double Slice Precision': [doublesliceprecision]}
 
 
 magicmissle = AutoDamage(magicMissleDamage)
