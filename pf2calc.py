@@ -452,7 +452,7 @@ class Selector:
             return False
         for key in keyList:
             attack = Selector.selections.get(key)
-            if type(attack) is CombinedAttack:
+            if isinstance(attack, CombinedAttack):
                 return False
         return True
     
@@ -586,11 +586,13 @@ class Context:
         self.onThirdHitDamageDice = copy.deepcopy(oldContext.onThirdHitDamageDice)
         self.onEveryHitDamageDice = copy.deepcopy(oldContext.onEveryHitDamageDice)
         
-        if oldContext.didHit:
-            self.onFirstHitDamageDice = self.onSecondHitDamageDice
-            self.onSecondHitDamageDice = self.onThirdHitDamageDice
-            self.onThirdHitDamageDice = []
-        self.didHit = False
+        # if oldContext.didHit:
+        #     print("dd1 is: ", self.onFirstHitDamageDice)
+        #     self.onFirstHitDamageDice = self.onSecondHitDamageDice
+        #     self.onSecondHitDamageDice = self.onThirdHitDamageDice
+        #     self.onThirdHitDamageDice = []
+        # self.didHit = False
+        # print("dd2 is: ", self.onFirstHitDamageDice)
         
         if oldContext.usedDamage:
             self.thisDamageBonus = 0
@@ -613,7 +615,7 @@ class Context:
             self.flatfooted = True
         elif result.nextAttackFF:
             self.flatfooted = True
-        elif type(result.atk) is Strike:
+        elif isinstance(result.atk, Strike):
             self.flatfooted = self.origffstatus
                     
         if result.trueStrike:
@@ -654,7 +656,7 @@ class Context:
                     
         self.thisStrikeBonus += result.nextStrikeBonus
                 
-                    
+        # print("dd is: ", self.onFirstHitDamageDice)
         if result.addfirsthitdamageDice:
             self.onFirstHitDamageDice += result.addfirsthitdamageDice
         if result.addsecondhitdamageDice:
@@ -663,7 +665,17 @@ class Context:
             self.onThirdHitDamageDice += result.addthirdhitdamageDice
         if result.addeveryhitdamageDice:
             self.onEveryHitDamageDice += result.addeveryhitdamageDice
-                    
+        
+        
+        # print("resulttype: ", type(result.atk), "good: ", result.good, "vg: ", result.veryGood)
+        if (isinstance(result.atk, Strike)) and (result.good or result.veryGood):
+            # print("here")
+            self.onFirstHitDamageDice = self.onSecondHitDamageDice
+            self.onSecondHitDamageDice = self.onThirdHitDamageDice
+            self.onThirdHitDamageDice = []
+        
+        # print("dd is now: ", self.onFirstHitDamageDice)
+        
         if result.adddamage:
             self.thisDamageBonus += result.adddamage
                 
@@ -755,6 +767,7 @@ class Context:
     
     def getHitDamageDice(self):
         dice = self.onFirstHitDamageDice + self.onEveryHitDamageDice + self.applyOnceDamageDice
+        # print("did hit here")
         self.didHit = True
         return dice
     
@@ -803,6 +816,8 @@ class Context:
             yield chance, dDists, pDists
             
     def combine(self, sameContext):
+        # print("1: ", self.didHit )
+        # print("2: ", sameContext.didHit )
         self.damageChances.addDamageChances(sameContext.damageChances)
     def __eq__(self, obj):
         
@@ -1343,7 +1358,7 @@ def graphTrace(routine, target, level, levelDiff, attackBonus, damageBonus, weak
     crits = 0
     debuffs = 0
     
-    if type(routine) is CombinedAttack:
+    if isinstance(routine, CombinedAttack):
         # what if it contains more combined attacks?
         for atk in routine.validFor(level):
             newy, newpy, nh, nc, nd = graphTrace(atk, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus)
@@ -1377,7 +1392,7 @@ def graphChanceDamage(routine, target, level, levelDiff, attackBonus, damageBonu
     damageList = []
     chanceList = []
     
-    if type(routine) is CombinedAttack:
+    if isinstance(routine, CombinedAttack):
         for atk in routine.validFor(level):
             return graphChanceDamage(atk, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus, displayPersistent)
             
@@ -1433,7 +1448,7 @@ def graphChanceDebuff(routine, target, level, levelDiff, attackBonus, damageBonu
     debuffList = []
     chanceList = []
     
-    if type(routine) is CombinedAttack:
+    if isinstance(routine, CombinedAttack):
         for atk in routine.validFor(level):
             return graphChanceDebuff(atk, target, level, levelDiff, attackBonus, damageBonus, weakness, flatfootedStatus, displayPersistent)
     
@@ -1482,7 +1497,7 @@ def createTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, weakness
             toAdd = target.contains(i+levelDiff)
             if blend:
                 toAdd = target.contains(i+levelDiff-2) and target.contains(i+levelDiff+2)
-            if(type(s) is CombinedAttack):
+            if(isinstance(s, CombinedAttack)):
                 if s.contains(i) and toAdd:
                     xList.append(i)
             else:
@@ -1548,7 +1563,7 @@ def createLevelTraces(levelDiff, flatfootedStatus, attackBonus, damageBonus, wea
         
         # is this strike routine valid for this level?
         toAdd = True
-        if(type(s) is CombinedAttack):
+        if(isinstance(s, CombinedAttack)):
             if not s.contains(level):
                     toAdd = False
         else:
@@ -1594,7 +1609,7 @@ def createDamageDistribution(levelDiff, flatfootedStatus, attackBonus, damageBon
         
         # is this strike routine valid for this level?
         toAdd = True
-        if(type(s) is CombinedAttack):
+        if(isinstance(s, CombinedAttack)):
             if not s.contains(level):
                     toAdd = False
         else:
@@ -1628,7 +1643,7 @@ def createDebuffDistribution(levelDiff, flatfootedStatus, attackBonus, damageBon
         
         # is this strike routine valid for this level?
         toAdd = True
-        if(type(s) is CombinedAttack):
+        if(isinstance(s, CombinedAttack)):
             if not s.contains(level):
                     toAdd = False
         else:

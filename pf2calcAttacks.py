@@ -2515,12 +2515,12 @@ class SaveAttack(AtkSelection):
 
     def critSuccessResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         return r
         
     def failureResult(self, level, context):
@@ -2540,14 +2540,14 @@ class Feint(SaveAttack):
         
     def critSuccessResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         
         r.futureAttacksFF = True
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         
         r.nextAttackFF = True
         return r
@@ -2559,14 +2559,14 @@ class ScoundrelFeint(SaveAttack):
         
     def critSuccessResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         
         r.futureAttacksFF = True
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         
         r.futureAttacksFF = True
         return r
@@ -2578,14 +2578,14 @@ class Demoralize(SaveAttack):
         
     def critSuccessResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         
         r.frightened = 2
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         
         r.frightened = 1
         return r
@@ -2597,14 +2597,14 @@ class ScareToDeath(SaveAttack):
         
     def critSuccessResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         
         r.frightened = 3
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         
         r.frightened = 2
         return r
@@ -2631,14 +2631,14 @@ class Trip(SaveAttack):
         damageDist.addBonus(bonus)
         
         r = Result(self, damageDist, Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         
         r.futureAttacksFF = True
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         
         r.futureAttacksFF = True
         return r
@@ -2650,14 +2650,14 @@ class Grapple(SaveAttack):
         
     def critSuccessResult(self, level, context):        
         r = Result(self, Distribution(), Distribution())
-        r.setCritSuccess()
+        r.setCrit()
         
         r.futureAttacksFF = True
         return r
     
     def successResult(self, level, context):
         r = Result(self, Distribution(),Distribution())
-        r.setSuccess()
+        r.setHit()
         
         r.futureAttacksFF = True
         return r
@@ -3769,7 +3769,7 @@ rangerprecedge.addthirdhitdamageDice = rangerprecedgedamage3
 
 precisionedgedamage = RangedStrike(martialAttackBonus, noneDamage)
 precisionedgedamage.isWeapon = False
-precisionedgedamage.weaponDamageDice = rangerprecedgedamage1
+precisionedgedamage.weaponDamageDice = copy.deepcopy(rangerprecedgedamage1)
 
 rangerbearsupport = Effect()
 rangerbearsupport.addeveryhitdamageDice = rangerbearsupportdamage
